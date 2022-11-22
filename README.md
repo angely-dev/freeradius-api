@@ -5,7 +5,7 @@ A REST API on top of the [FreeRADIUS](https://freeradius.org) database schema fo
 * It provides a bit of logic and [#semantic](https://github.com/angely-dev/freeradius-api#semantic) to ensure some data consistency
 * It aims to be KISS so that it can be plugged or forked for adding more business logic
 
-Based on [Pydantic](https://github.com/pydantic/pydantic) and [FastAPI](https://github.com/tiangolo/fastapi). But you can stick with the `pyfreeradius` module and build your own API over it.
+Based on [Pydantic](https://github.com/pydantic/pydantic) and [FastAPI](https://github.com/tiangolo/fastapi). But you can stick with the [`pyfreeradius`](https://github.com/angely-dev/freeradius-api/blob/master/src/pyfreeradius.py) module and build your own API over it.
 
 > **Why Python?** Because it tends to be the de-facto standard in network automation, yet the model-centric approach taken here allows for other implementations. Feel free to adapt!
 
