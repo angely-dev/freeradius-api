@@ -1,3 +1,12 @@
+* [What is this project?](#what-is-this-project)
+* [What it is NOT?](#what-it-is-not)
+* [How To](#how-to)
+  * [Using Docker](#using-docker) (for testing only)
+  * [Using a venv](#using-a-venv)
+* [Conceptual approach](#conceptual-approach)
+  * [Domain-Driven Design](#domain-driven-design-ddd) (repository pattern)
+  * [Class diagram](#class-diagram)
+ 
 # What is this project?
 
 A REST API on top of the [FreeRADIUS](https://freeradius.org) database schema for automation and integration purposes.
