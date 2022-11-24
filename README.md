@@ -1,5 +1,6 @@
 * [What is this project?](#what-is-this-project)
 * [What it is NOT?](#what-it-is-not)
+* [Quick demo](#quick-demo)
 * [How To](#how-to)
   * [Using Docker](#using-docker) (for testing only)
   * [Using a venv](#using-a-venv)
@@ -26,6 +27,197 @@ Based on [Pydantic](https://github.com/pydantic/pydantic) and [FastAPI](https://
 
 * A dumb CRUD API on top of the FreeRADIUS database schema
 * A means to run the AAA server logic through HTTP (covered by the native [rest](https://github.com/FreeRADIUS/freeradius-server/blob/release_3_2_1/raddb/mods-available/rest) module)
+
+# Quick demo
+
+## Using the module
+
+The `pyfreeradius` module works with Python objects and can be imported. I did provide two examples:
+
+* [src/sample.py](https://github.com/angely-dev/freeradius-api/blob/master/src/sample.py)
+* [docker/freeradius-mysql/initial_data.py](https://github.com/angely-dev/freeradius-api/blob/master/docker/freeradius-mysql/initial_data.py)
+
+> **Note:** the term *repository* is used in respect of the Repository pattern. It implements the mapping between the objects and the database schema. More explanation in the [#conceptual-approach](#conceptual-approach) section.
+
+## Using the API
+
+The API works with JSON objects. Here is below a demo using `curl` instead of the Web UI:
+
+* Get all NASes, users and groups:
+
+```bash
+$ curl http://localhost:8000/nas
+[
+    "3.3.3.3",
+    "4.4.4.4"
+]
+```
+```bash
+$ curl http://localhost:8000/users
+[
+    "bob",
+    "alice@adsl",
+    "eve",
+    "oscar@wil.de"
+]
+```
+```bash
+$ curl http://localhost:8000/groups
+[
+    "100m",
+    "200m"
+]
+```
+
+* Get a specific NAS, user or group:
+
+```bash
+$ curl http://localhost:8000/nas/3.3.3.3
+{
+    "nasname": "3.3.3.3",
+    "shortname": "my-super-nas",
+    "secret": "my-super-secret"
+}
+```
+```bash
+$ curl http://localhost:8000/users/eve
+{
+    "username": "eve",
+    "checks": [
+        {
+            "attribute": "Cleartext-Password",
+            "op": ":=",
+            "value": "eve-pass"
+        }
+    ],
+    "replies": [
+        {
+            "attribute": "Framed-IP-Address",
+            "op": ":=",
+            "value": "10.0.0.3"
+        },
+        {
+            "attribute": "Framed-Route",
+            "op": "+=",
+            "value": "192.168.1.0/24"
+        },
+        {
+            "attribute": "Framed-Route",
+            "op": "+=",
+            "value": "192.168.2.0/24"
+        },
+        {
+            "attribute": "Huawei-Vpn-Instance",
+            "op": ":=",
+            "value": "eve-vrf"
+        }
+    ],
+    "groups": [
+        {
+            "groupname": "100m",
+            "priority": 1
+        },
+        {
+            "groupname": "200m",
+            "priority": 2
+        }
+    ]
+}
+```
+```bash
+$ curl http://localhost:8000/groups/100m
+{
+    "groupname": "100m",
+    "checks": [],
+    "replies": [
+        {
+            "attribute": "Filter-Id",
+            "op": ":=",
+            "value": "100m"
+        }
+    ],
+    "users": [
+        {
+            "username": "bob",
+            "priority": 1
+        },
+        {
+            "username": "alice@adsl",
+            "priority": 1
+        },
+        {
+            "username": "eve",
+            "priority": 1
+        }
+    ]
+}
+```
+
+* Post a NAS, a user or a group:
+
+```bash
+$ curl -X 'POST' \
+  'http://localhost:8000/nas' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "nasname": "5.5.5.5",
+  "shortname": "my-nas",
+  "secret": "my-secret"
+}'
+```
+```bash
+$ curl -X 'POST' \
+  'http://localhost:8000/users' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "username": "my-user@my-realm",
+  "checks": [
+    {
+      "attribute": "Cleartext-Password",
+      "op": ":=",
+      "value": "my-pass"
+    }
+  ],
+  "replies": [
+    {
+      "attribute": "Framed-IP-Address",
+      "op": ":=",
+      "value": "192.168.0.1"
+    },
+    {
+      "attribute": "Huawei-Vpn-Instance",
+      "op": ":=",
+      "value": "my-vrf"
+    }
+  ]
+}'
+```
+```bash
+$ curl -X 'POST' \
+  'http://localhost:8000/groups' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "groupname": "300m",
+  "replies": [
+    {
+      "attribute": "Filter-Id",
+      "op": ":=",
+      "value": "300m"
+    }
+  ]
+}'
+```
+
+* Delete a NAS, a user or a group:
+
+```bash
+curl -X 'DELETE' http://localhost:8000/nas/5.5.5.5
+curl -X 'DELETE' http://localhost:8000/users/my-user@my-realm
+curl -X 'DELETE' http://localhost:8000/groups/300m
+```
 
 # How To
 
