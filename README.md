@@ -32,28 +32,27 @@ Based on [Pydantic](https://github.com/pydantic/pydantic) and [FastAPI](https://
 
 ## Using the module
 
-The `pyfreeradius` module works with Python objects and can be imported. I did provide two examples:
+The `pyfreeradius` module works with Python objects.
 
-* [src/sample.py](https://github.com/angely-dev/freeradius-api/blob/master/src/sample.py)
-* [docker/freeradius-mysql/initial_data.py](https://github.com/angely-dev/freeradius-api/blob/master/docker/freeradius-mysql/initial_data.py)
-
-> **Note:** the term *repository* is used in respect of the Repository pattern. It implements the mapping between the objects and the database schema. More explanation in the [#conceptual-approach](#conceptual-approach) section.
+See [#module-only](#module-only).
 
 ## Using the API
 
-The API works with JSON objects. Here is below a demo using `curl` instead of the Web UI:
+The API works with JSON objects.
+
+Here is a demo below using `curl` instead of the Web UI:
 
 * Get all NASes, users and groups:
 
 ```bash
-$ curl http://localhost:8000/nas
+$ curl -X 'GET' http://localhost:8000/nas
 [
     "3.3.3.3",
     "4.4.4.4"
 ]
 ```
 ```bash
-$ curl http://localhost:8000/users
+$ curl -X 'GET' http://localhost:8000/users
 [
     "bob",
     "alice@adsl",
@@ -62,7 +61,7 @@ $ curl http://localhost:8000/users
 ]
 ```
 ```bash
-$ curl http://localhost:8000/groups
+$ curl -X 'GET' http://localhost:8000/groups
 [
     "100m",
     "200m"
@@ -72,7 +71,7 @@ $ curl http://localhost:8000/groups
 * Get a specific NAS, user or group:
 
 ```bash
-$ curl http://localhost:8000/nas/3.3.3.3
+$ curl -X 'GET' http://localhost:8000/nas/3.3.3.3
 {
     "nasname": "3.3.3.3",
     "shortname": "my-super-nas",
@@ -80,7 +79,7 @@ $ curl http://localhost:8000/nas/3.3.3.3
 }
 ```
 ```bash
-$ curl http://localhost:8000/users/eve
+$ curl -X 'GET' http://localhost:8000/users/eve
 {
     "username": "eve",
     "checks": [
@@ -125,7 +124,7 @@ $ curl http://localhost:8000/users/eve
 }
 ```
 ```bash
-$ curl http://localhost:8000/groups/100m
+$ curl -X 'GET' http://localhost:8000/groups/100m
 {
     "groupname": "100m",
     "checks": [],
@@ -156,7 +155,7 @@ $ curl http://localhost:8000/groups/100m
 * Post a NAS, a user or a group:
 
 ```bash
-$ curl -X 'POST' \
+curl -X 'POST' \
   'http://localhost:8000/nas' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
@@ -167,7 +166,7 @@ $ curl -X 'POST' \
 }'
 ```
 ```bash
-$ curl -X 'POST' \
+curl -X 'POST' \
   'http://localhost:8000/users' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
@@ -195,7 +194,7 @@ $ curl -X 'POST' \
 }'
 ```
 ```bash
-$ curl -X 'POST' \
+curl -X 'POST' \
   'http://localhost:8000/groups' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
@@ -340,6 +339,8 @@ You are free to use the core module without the API.
 
 The steps are the exact same except you don't run the API at the end.
 I did provide a [`sample.py`](https://github.com/angely-dev/freeradius-api/blob/master/src/sample.py) file:
+
+> **Note:** the term *repository* refers to the Repository pattern. See the [#conceptual-approach](#conceptual-approach).
 
 ```py
 from database import db_connection, db_tables
