@@ -36,8 +36,8 @@ class User(BaseModel):
         groups = values.get('groups')
 
         if not (checks or replies or groups):
-            raise ValueError('User must have at least one check or one reply attribute, '
-                             'or must belong to at least one group')
+            raise ValueError('User must have at least one check or one reply attribute'
+                             ', or must have at least one group')
 
         groupnames = [group.groupname for group in groups]
         if not len(groupnames) == len(set(groupnames)):
@@ -76,10 +76,6 @@ class Nas(BaseModel):
 # between the Domain Objects (the Pydantic models) and the database.
 #
 # The BaseRepository is the (abstract) superclass of the repositories.
-# The constructor sets the DB context, i.e., connection and table names.
-#
-# The custom contextmanager properly opens/closes the DB cursor and transaction
-# (some DB drivers do not do it by default or do not support the autocommit yet).
 #
 
 class RadTables(BaseModel):
@@ -91,6 +87,7 @@ class RadTables(BaseModel):
     nas: str = 'nas'
 
 class BaseRepository:
+    # The constructor sets the DB context (connection and table names)
     def __init__(self, db_connection, db_tables: RadTables):
         self.db_connection = db_connection
         self.radcheck = db_tables.radcheck
@@ -100,6 +97,8 @@ class BaseRepository:
         self.radusergroup = db_tables.radusergroup
         self.nas = db_tables.nas
 
+    # This contextmanager properly opens/closes the DB cursor and transaction
+    # (some drivers not supporting this feature yet with autocommit enabled)
     @contextmanager
     def _db_cursor(self):
         db_cursor = self.db_connection.cursor()
