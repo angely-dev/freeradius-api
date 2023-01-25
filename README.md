@@ -7,7 +7,7 @@
 * [How To](#how-to)
   * [Using Docker](#using-docker) (for testing only)
   * [Using a venv](#using-a-venv)
-* [API authentication](#api-authentication-optional) (optional)
+* [API authentication](#api-authentication) (optional)
 * [Conceptual approach](#conceptual-approach)
   * [Domain-Driven Design](#domain-driven-design-ddd) (repository pattern)
   * [Class diagram](#class-diagram)
@@ -473,7 +473,7 @@ The HTML report is then browsable:
 
 ![image](https://user-images.githubusercontent.com/4362224/202913672-2e8205f5-a0ca-409f-bad6-14a93191972f.png)
 
-# API authentication (optional)
+# API authentication
 
 You may want to add authentication to the API.
 
