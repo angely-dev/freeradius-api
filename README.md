@@ -7,6 +7,7 @@
 * [How To](#how-to)
   * [Using Docker](#using-docker) (for testing only)
   * [Using a venv](#using-a-venv)
+* [API authentication](#api-authentication-optional) (optional)
 * [Conceptual approach](#conceptual-approach)
   * [Domain-Driven Design](#domain-driven-design-ddd) (repository pattern)
   * [Class diagram](#class-diagram)
