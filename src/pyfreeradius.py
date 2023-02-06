@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pydantic import BaseModel, IPvAnyAddress, constr, conint, root_validator
 from typing import List
@@ -74,8 +75,7 @@ class Nas(BaseModel):
 #
 # As per the Repository pattern, repositories implement the mapping
 # between the Domain Objects (the Pydantic models) and the database.
-#
-# The BaseRepository is the (abstract) superclass of the repositories.
+# The BaseRepository is the abstract superclass of the repositories.
 #
 
 class RadTables(BaseModel):
@@ -86,8 +86,9 @@ class RadTables(BaseModel):
     radusergroup: str = 'radusergroup'
     nas: str = 'nas'
 
-class BaseRepository:
+class BaseRepository(ABC):
     # The constructor sets the DB context (connection and table names)
+    @abstractmethod
     def __init__(self, db_connection, db_tables: RadTables):
         self.db_connection = db_connection
         self.radcheck = db_tables.radcheck
@@ -109,6 +110,9 @@ class BaseRepository:
             db_cursor.close()
 
 class UserRepository(BaseRepository):
+    def __init__(self, db_connection, db_tables: RadTables):
+        super().__init__(db_connection, db_tables)
+
     def exists(self, username: str) -> bool:
         with self._db_cursor() as db_cursor:
             sql = f"""SELECT COUNT(DISTINCT username) FROM {self.radcheck} WHERE username = %s
@@ -167,6 +171,9 @@ class UserRepository(BaseRepository):
             db_cursor.execute(f'DELETE FROM {self.radusergroup} WHERE username = %s', (username, ))
 
 class GroupRepository(BaseRepository):
+    def __init__(self, db_connection, db_tables: RadTables):
+        super().__init__(db_connection, db_tables)
+
     def exists(self, groupname: str) -> bool:
         with self._db_cursor() as db_cursor:
             sql = f"""SELECT COUNT(DISTINCT groupname) FROM {self.radgroupcheck} WHERE groupname = %s
@@ -232,6 +239,9 @@ class GroupRepository(BaseRepository):
             db_cursor.execute(f'DELETE FROM {self.radusergroup} WHERE groupname = %s', (groupname, ))
 
 class NasRepository(BaseRepository):
+    def __init__(self, db_connection, db_tables: RadTables):
+        super().__init__(db_connection, db_tables)
+
     def exists(self, nasname: IPvAnyAddress) -> bool:
         with self._db_cursor() as db_cursor:
             sql = f'SELECT COUNT(DISTINCT nasname) FROM {self.nas} where nasname = %s'
