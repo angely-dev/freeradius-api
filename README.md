@@ -14,7 +14,7 @@
  
 # What is this project?
 
-A REST API on top of the [FreeRADIUS](https://freeradius.org) database schema for automation and integration purposes.
+A lightweight REST API on top of the [FreeRADIUS](https://freeradius.org) database schema for automation and integration purposes.
 
 * It provides a bit of logic and [#semantic](https://github.com/angely-dev/freeradius-api#semantic) to ensure some data consistency
 * It aims to be KISS so that it can be plugged or forked for adding more business logic
@@ -574,7 +574,7 @@ A request header is quite common. Some examples:
 
 You may be interested in the model-centric approach taken (or you may not).
 
-The implementation is fairly easy but it is good to know it conforms to some pattern.
+**The implementation is fairly easy but it is good to know it conforms to some pattern.**
 
 ## Domain-Driven Design (DDD)
 
