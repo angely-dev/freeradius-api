@@ -117,7 +117,7 @@ class UserRepository(BaseRepository):
         with self._db_cursor() as db_cursor:
             sql = f"""SELECT COUNT(DISTINCT username) FROM {self.radcheck} WHERE username = %s
                 UNION SELECT COUNT(DISTINCT username) FROM {self.radreply} WHERE username = %s
-                UNION SELECT COUNT(DISTINCT username) FROM {self.radusergroup} where username = %s"""
+                UNION SELECT COUNT(DISTINCT username) FROM {self.radusergroup} WHERE username = %s"""
             db_cursor.execute(sql, (username, username, username))
             counts = [count for count, in db_cursor.fetchall()]
             return sum(counts) > 0
@@ -136,15 +136,15 @@ class UserRepository(BaseRepository):
             return None
 
         with self._db_cursor() as db_cursor:
-            sql = f'SELECT attribute, op, value FROM {self.radcheck} where username = %s'
+            sql = f'SELECT attribute, op, value FROM {self.radcheck} WHERE username = %s'
             db_cursor.execute(sql, (username, ))
             checks = [AttributeOpValue(attribute=a, op=o, value=v) for a, o, v in db_cursor.fetchall()]
 
-            sql = f'SELECT attribute, op, value FROM {self.radreply} where username = %s'
+            sql = f'SELECT attribute, op, value FROM {self.radreply} WHERE username = %s'
             db_cursor.execute(sql, (username, ))
             replies = [AttributeOpValue(attribute=a, op=o, value=v) for a, o, v in db_cursor.fetchall()]
 
-            sql = f'SELECT groupname, priority FROM {self.radusergroup} where username = %s'
+            sql = f'SELECT groupname, priority FROM {self.radusergroup} WHERE username = %s'
             db_cursor.execute(sql, (username, ))
             groups = [UserGroup(groupname=g, priority=p) for g, p in db_cursor.fetchall()]
 
@@ -204,15 +204,15 @@ class GroupRepository(BaseRepository):
             return None
 
         with self._db_cursor() as db_cursor:
-            sql = f'SELECT attribute, op, value FROM {self.radgroupcheck} where groupname = %s'
+            sql = f'SELECT attribute, op, value FROM {self.radgroupcheck} WHERE groupname = %s'
             db_cursor.execute(sql, (groupname, ))
             checks = [AttributeOpValue(attribute=a, op=o, value=v) for a, o, v in db_cursor.fetchall()]
 
-            sql = f'SELECT attribute, op, value FROM {self.radgroupreply} where groupname = %s'
+            sql = f'SELECT attribute, op, value FROM {self.radgroupreply} WHERE groupname = %s'
             db_cursor.execute(sql, (groupname, ))
             replies = [AttributeOpValue(attribute=a, op=o, value=v) for a, o, v in db_cursor.fetchall()]
 
-            sql = f'SELECT username, priority FROM {self.radusergroup} where groupname = %s'
+            sql = f'SELECT username, priority FROM {self.radusergroup} WHERE groupname = %s'
             db_cursor.execute(sql, (groupname, ))
             users = [GroupUser(username=u, priority=p) for u, p in db_cursor.fetchall()]
 
@@ -244,7 +244,7 @@ class NasRepository(BaseRepository):
 
     def exists(self, nasname: IPvAnyAddress) -> bool:
         with self._db_cursor() as db_cursor:
-            sql = f'SELECT COUNT(DISTINCT nasname) FROM {self.nas} where nasname = %s'
+            sql = f'SELECT COUNT(DISTINCT nasname) FROM {self.nas} WHERE nasname = %s'
             db_cursor.execute(sql, (str(nasname), ))
             count, = db_cursor.fetchone()
             return count > 0
