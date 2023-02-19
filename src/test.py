@@ -35,6 +35,8 @@ class TestModelsAndRepositories(unittest.TestCase):
         # Repository: finding
         self.assertEqual(user_repo.find_one(u.username), u)
         self.assertIn(u.username, user_repo.find_all_usernames())
+        self.assertIn(u.username, user_repo.find_usernames())
+        self.assertIn(u.username, user_repo.find_usernames(from_username='t'))
 
         # Repository: removing
         user_repo.remove(u.username)
@@ -62,6 +64,8 @@ class TestModelsAndRepositories(unittest.TestCase):
         # Repository: finding
         self.assertEqual(group_repo.find_one(g.groupname), g)
         self.assertIn(g.groupname, group_repo.find_all_groupnames())
+        self.assertIn(g.groupname, group_repo.find_groupnames())
+        self.assertIn(g.groupname, group_repo.find_groupnames(from_groupname='f'))
 
         # Repository: removing
         group_repo.remove(g.groupname)
@@ -83,6 +87,8 @@ class TestModelsAndRepositories(unittest.TestCase):
         # Repository: finding
         self.assertEqual(nas_repo.find_one(n.nasname), n)
         self.assertIn(str(n.nasname), nas_repo.find_all_nasnames())
+        self.assertIn(str(n.nasname), nas_repo.find_nasnames())
+        self.assertIn(str(n.nasname), nas_repo.find_nasnames(from_nasname='1.1.1.0'))
 
         # Repository: removing
         nas_repo.remove(n.nasname)

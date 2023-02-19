@@ -87,6 +87,9 @@ class RadTables(BaseModel):
     nas: str = 'nas'
 
 class BaseRepository(ABC):
+    # Number of items per page
+    _PER_PAGE = 20
+
     # The constructor sets the DB context (connection and table names)
     @abstractmethod
     def __init__(self, db_connection, db_tables: RadTables):
@@ -128,6 +131,37 @@ class UserRepository(BaseRepository):
                 UNION SELECT DISTINCT username FROM {self.radreply}
                 UNION SELECT DISTINCT username FROM {self.radusergroup}"""
             db_cursor.execute(sql)
+            usernames = [username for username, in db_cursor.fetchall()]
+            return usernames
+
+    def find_usernames(self, from_username: str = None) -> List[str]:
+        if not from_username:
+            return self._find_first_usernames()
+        return self._find_next_usernames(from_username)
+
+    def _find_first_usernames(self) -> List[str]:
+        with self._db_cursor() as db_cursor:
+            sql = f"""
+                SELECT username FROM (
+                        SELECT DISTINCT username FROM {self.radcheck}
+                  UNION SELECT DISTINCT username FROM {self.radreply}
+                  UNION SELECT DISTINCT username FROM {self.radusergroup}
+                ) u ORDER BY username LIMIT {self._PER_PAGE}
+            """
+            db_cursor.execute(sql)
+            usernames = [username for username, in db_cursor.fetchall()]
+            return usernames
+
+    def _find_next_usernames(self, from_username: str) -> List[str]:
+        with self._db_cursor() as db_cursor:
+            sql = f"""
+                SELECT username FROM (
+                        SELECT DISTINCT username FROM {self.radcheck}
+                  UNION SELECT DISTINCT username FROM {self.radreply}
+                  UNION SELECT DISTINCT username FROM {self.radusergroup}
+                ) u WHERE username > %s ORDER BY username LIMIT {self._PER_PAGE}
+            """
+            db_cursor.execute(sql, (from_username, ))
             usernames = [username for username, in db_cursor.fetchall()]
             return usernames
 
@@ -192,6 +226,37 @@ class GroupRepository(BaseRepository):
             groupnames = [groupname for groupname, in db_cursor.fetchall()]
             return groupnames
 
+    def find_groupnames(self, from_groupname: str = None) -> List[str]:
+        if not from_groupname:
+            return self._find_first_groupnames()
+        return self._find_next_groupnames(from_groupname)
+
+    def _find_first_groupnames(self) -> List[str]:
+        with self._db_cursor() as db_cursor:
+            sql = f"""
+                SELECT groupname FROM (
+                        SELECT DISTINCT groupname FROM {self.radgroupcheck}
+                  UNION SELECT DISTINCT groupname FROM {self.radgroupreply}
+                  UNION SELECT DISTINCT groupname FROM {self.radusergroup}
+                ) g ORDER BY groupname LIMIT {self._PER_PAGE}
+            """
+            db_cursor.execute(sql)
+            groupnames = [groupname for groupname, in db_cursor.fetchall()]
+            return groupnames
+
+    def _find_next_groupnames(self, from_groupname: str) -> List[str]:
+        with self._db_cursor() as db_cursor:
+            sql = f"""
+                SELECT groupname FROM (
+                        SELECT DISTINCT groupname FROM {self.radgroupcheck}
+                  UNION SELECT DISTINCT groupname FROM {self.radgroupreply}
+                  UNION SELECT DISTINCT groupname FROM {self.radusergroup}
+                ) g WHERE groupname > %s ORDER BY groupname LIMIT {self._PER_PAGE}
+            """
+            db_cursor.execute(sql, (from_groupname, ))
+            groupnames = [groupname for groupname, in db_cursor.fetchall()]
+            return groupnames
+
     def has_users(self, groupname: str) -> bool:
         with self._db_cursor() as db_cursor:
             sql = f'SELECT COUNT(DISTINCT username) FROM {self.radusergroup} WHERE groupname = %s'
@@ -253,6 +318,27 @@ class NasRepository(BaseRepository):
         with self._db_cursor() as db_cursor:
             sql = f'SELECT DISTINCT nasname FROM {self.nas}'
             db_cursor.execute(sql)
+            nasnames = [nasname for nasname, in db_cursor.fetchall()]
+            return nasnames
+
+    def find_nasnames(self, from_nasname: IPvAnyAddress = None) -> List[str]:
+        if not from_nasname:
+            return self._find_first_nasnames()
+        return self._find_next_nasnames(from_nasname)
+
+    def _find_first_nasnames(self) -> List[str]:
+        with self._db_cursor() as db_cursor:
+            sql = f"""SELECT DISTINCT nasname FROM {self.nas}
+                      ORDER BY nasname LIMIT {self._PER_PAGE}"""
+            db_cursor.execute(sql)
+            nasnames = [nasname for nasname, in db_cursor.fetchall()]
+            return nasnames
+
+    def _find_next_nasnames(self, from_nasname: IPvAnyAddress) -> List[str]:
+        with self._db_cursor() as db_cursor:
+            sql = f"""SELECT DISTINCT nasname FROM {self.nas}
+                      WHERE nasname > %s ORDER BY nasname LIMIT {self._PER_PAGE}"""
+            db_cursor.execute(sql, (str(from_nasname), ))
             nasnames = [nasname for nasname, in db_cursor.fetchall()]
             return nasnames
 
