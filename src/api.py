@@ -17,6 +17,7 @@ nas_repo = NasRepository(db_connection, db_tables)
 
 # API_URL will be used to set the "Location" header field
 # after a resource has been created (POST) as per RFC 7231
+# and the "Link" header field (pagination) as per RFC 8288
 API_URL = 'http://localhost:8000'
 
 # Our API router and routes
@@ -27,16 +28,28 @@ def read_root():
     return {'Welcome!': f'API docs is available at {API_URL}/docs'}
 
 @router.get('/nas', tags=['nas'], status_code=200, response_model=List[str])
-async def get_nas(from_nasname: str = None):
-    return nas_repo.find_nasnames(from_nasname)
+async def get_nas(response: Response, from_nasname: str = None):
+    nasnames = nas_repo.find_nasnames(from_nasname)
+    if nasnames:
+        last_nasname = nasnames[-1]
+        response.headers['Link'] = f'<{API_URL}/nas?from_nasname={last_nasname}>; rel="next"'
+    return nasnames
 
 @router.get('/users', tags=['users'], status_code=200, response_model=List[str])
-async def get_users(from_username: str = None):
-    return user_repo.find_usernames(from_username)
+async def get_users(response: Response, from_username: str = None):
+    usernames = user_repo.find_usernames(from_username)
+    if usernames:
+        last_username = usernames[-1]
+        response.headers['Link'] = f'<{API_URL}/users?from_username={last_username}>; rel="next"'
+    return usernames
 
 @router.get('/groups', tags=['groups'], status_code=200, response_model=List[str])
-async def get_groups(from_groupname: str = None):
-    return group_repo.find_groupnames(from_groupname)
+async def get_groups(response: Response, from_groupname: str = None):
+    groupnames = group_repo.find_groupnames(from_groupname)
+    if groupnames:
+        last_groupname = groupnames[-1]
+        response.headers['Link'] = f'<{API_URL}/groups?from_groupname={last_groupname}>; rel="next"'
+    return groupnames
 
 @router.get('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas)
 async def get_nas(nasname: str):
