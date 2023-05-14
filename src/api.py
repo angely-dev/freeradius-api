@@ -27,16 +27,16 @@ def read_root():
     return {'Welcome!': f'API docs is available at {API_URL}/docs'}
 
 @router.get('/nas', tags=['nas'], status_code=200, response_model=List[str])
-async def get_nas():
-    return nas_repo.find_all_nasnames()
+async def get_nas(from_nasname: str = None):
+    return nas_repo.find_nasnames(from_nasname)
 
 @router.get('/users', tags=['users'], status_code=200, response_model=List[str])
-async def get_users():
-    return user_repo.find_all_usernames()
+async def get_users(from_username: str = None):
+    return user_repo.find_usernames(from_username)
 
 @router.get('/groups', tags=['groups'], status_code=200, response_model=List[str])
-async def get_groups():
-    return group_repo.find_all_groupnames()
+async def get_groups(from_groupname: str = None):
+    return group_repo.find_groupnames(from_groupname)
 
 @router.get('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas)
 async def get_nas(nasname: str):
