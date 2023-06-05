@@ -7,6 +7,7 @@
 * [How To](#how-to)
   * [Using Docker](#using-docker) (for testing only)
   * [Using a venv](#using-a-venv)
+* [Keyset pagination](#keyset-pagination)
 * [API authentication](#api-authentication) (optional)
 * [Conceptual approach](#conceptual-approach)
   * [Domain-Driven Design](#domain-driven-design-ddd) (repository pattern)
@@ -472,6 +473,112 @@ Wrote HTML report to htmlcov/index.html
 The HTML report is then browsable:
 
 ![image](https://user-images.githubusercontent.com/4362224/202913672-2e8205f5-a0ca-409f-bad6-14a93191972f.png)
+
+# Keyset pagination
+
+As of [v1.3.0](https://github.com/angely-dev/freeradius-api/tree/v1.3.0), results are paginated (fetching all results at once is generally not needed nor recommended). There are two common options for pagination:
+
+* Offset pagination (aka `LIMIT` + `OFFSET`) — not implemented
+* **Keyset pagination (aka `WHERE` + `LIMIT`) — implemented**
+
+In the era of infinite scroll, the latter is generally preferred over the former. Not only is it better at performance but also simpler to implement.
+
+## Using the module
+
+Here is an example for fetching usernames (the same applies for groupnames and nasnames):
+
+```py
+# Before v1.3.0
+print(user_repo.find_all_usernames())              # NOT recommended
+
+# As of v1.3.0
+print(user_repo.find_usernames())                  # fetches first usernames
+print(user_repo.find_usernames(from_username='k')) # fetches usernames starting from k
+```
+
+```py
+# Reminder: to check if a username exists, use the "exists" method
+'aaa' in user_repo.find_all_usernames() # bad!
+user_repo.exists('aaa')                 # good
+```
+
+The number of items per page is currently [hardcoded to 20](https://github.com/angely-dev/freeradius-api/blob/460de53/src/pyfreeradius.py#L90-L91) since there wasn't a need (yet) to parametrize it.
+
+## Using the API
+
+Pagination is done through HTTP response headers (as per [RFC 8288](https://www.rfc-editor.org/rfc/rfc8288)) rather than JSON metadata. This is [debatable](https://news.ycombinator.com/item?id=12123511) but I prefer the returned JSON to contain only business data. Actually, this is what [GitHub API does](https://docs.github.com/en/rest/guides/using-pagination-in-the-rest-api#using-link-headers).
+
+Here is an example for fetching usernames (the same applies for groupnames and nasnames):
+
+```bash
+$ curl -X 'GET' -i http://localhost:8000/users
+HTTP/1.1 200 OK
+date: Mon, 05 Jun 2023 20:07:09 GMT
+server: uvicorn
+content-length: 121
+content-type: application/json
+link: <http://localhost:8000/users?from_username=acb>; rel="next" # notice the Link header
+
+["aaa","aab","aac","aad","aae","aaf","aag","aah","aai","aba","abb","abc","abd","abe","abf","abg","abh","abi","aca","acb"]
+```
+
+The API consumer (e.g., a frontend app) can then scroll to the next page `/users?from_username=acb`:
+
+```bash
+$ curl -X 'GET' -i http://localhost:8000/users?from_username=acb
+HTTP/1.1 200 OK
+date: Mon, 05 Jun 2023 20:07:43 GMT
+server: uvicorn
+content-length: 121
+content-type: application/json
+link: <http://localhost:8000/users?from_username=aed>; rel="next" # notice the Link header
+
+["acc","acd","ace","acf","acg","ach","aci","ada","adb","adc","add","ade","adf","adg","adh","adi","aea","aeb","aec","aed"]
+```
+
+And so on until there are no more results to fetch:
+
+```bash
+$ curl -X 'GET' -i http://localhost:8000/users?from_username=zzz
+HTTP/1.1 200 OK
+date: Mon, 05 Jun 2023 20:08:06 GMT
+server: uvicorn
+content-length: 2
+content-type: application/json
+# no more Link header
+```
+
+> Only `rel="next"` is implemented since there wasn't a need yet for `rel="prev|last|first"`.
+
+## SQL explanation
+
+There are plenty of articles about keyset pagination ([here is one](https://use-the-index-luke.com/no-offset), [here is another one](https://www.cockroachlabs.com/docs/stable/pagination.html)). The idea is to fetch limited results starting from a certain key.
+
+> In general, that key is also a `KEY` or an `INDEX` in the SQL sense, which is used to speed up the lookup. This is the case in the FreeRADIUS database schema: username, groupname and nasname are all keys.
+
+The query template looks like:
+
+```sql
+SELECT * FROM my_table
+WHERE my_key > my_value
+ORDER BY my_key
+LIMIT 20
+```
+
+Because in our case the lookup occurs in different tables, the query must be adapted to:
+
+```sql
+-- Keyset pagination for fetching usernames
+SELECT username FROM (
+        SELECT DISTINCT username FROM {self.radcheck}
+  UNION SELECT DISTINCT username FROM {self.radreply}
+  UNION SELECT DISTINCT username FROM {self.radusergroup}
+) u WHERE username > %s ORDER BY username LIMIT {self._PER_PAGE}
+```
+
+The issue [#1](https://github.com/angely-dev/freeradius-api/issues/1) provides more explanation about query performance and DBMSs support.
+
+> **In particular, the above SQL query breaks compatibility with Oracle and MSSQL.** Queries must be (easily) adapted for these DBMSs. The choice is assumed, considering that MySQL and PostgreSQL are more common for FreeRADIUS. For now, I still want to avoid an ORM like SQLAlchemy.
 
 # API authentication
 
