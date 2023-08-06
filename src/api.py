@@ -26,6 +26,7 @@ class RadAPIError(BaseModel):
     detail: str
 
 e404_response = {404: {'model': RadAPIError, 'description': 'Item not found'}}
+e409_response = {409: {'model': RadAPIError, 'description': 'Item already exists'}}
 
 # Our API router and routes
 router = APIRouter()
@@ -79,19 +80,19 @@ async def get_group(groupname: str):
         raise HTTPException(404, 'Given group does not exist')
     return group
 
-@router.post('/nas', tags=['nas'], status_code=201, response_model=Nas)
+@router.post('/nas', tags=['nas'], status_code=201, response_model=Nas, responses={**e409_response})
 async def post_nas(nas: Nas, response: Response):
     if nas_repo.exists(nas.nasname):
-       raise HTTPException(422, 'Given NAS already exists')
+       raise HTTPException(409, 'Given NAS already exists')
 
     nas_repo.add(nas)
     response.headers['Location'] = f'{API_URL}/nas/{nas.nasname}'
     return nas
 
-@router.post('/users', tags=['users'], status_code=201, response_model=User)
+@router.post('/users', tags=['users'], status_code=201, response_model=User, responses={**e409_response})
 async def post_user(user: User, response: Response):
     if user_repo.exists(user.username):
-        raise HTTPException(422, 'Given user already exists')
+        raise HTTPException(409, 'Given user already exists')
 
     for group in user.groups:
         if not group_repo.exists(group.groupname):
@@ -101,10 +102,10 @@ async def post_user(user: User, response: Response):
     response.headers['Location'] = f'{API_URL}/users/{user.username}'
     return user
 
-@router.post('/groups', tags=['groups'], status_code=201, response_model=Group)
+@router.post('/groups', tags=['groups'], status_code=201, response_model=Group, responses={**e409_response})
 async def post_group(group: Group, response: Response):
     if group_repo.exists(group.groupname):
-        raise HTTPException(422, 'Given group already exists')
+        raise HTTPException(409, 'Given group already exists')
 
     for user in group.users:
         if not user_repo.exists(user.username):
