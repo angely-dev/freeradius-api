@@ -46,6 +46,25 @@ class User(BaseModel):
 
         return values
 
+    class Config:
+        schema_extra = {
+            'examples': [
+                {
+                'username': 'my-user',
+                    'checks': [
+                        AttributeOpValue(attribute='Cleartext-Password', op=':=', value='my-pass')
+                    ],
+                    'replies': [
+                        AttributeOpValue(attribute='Framed-IP-Address', op=':=', value='10.0.0.1'),
+                        AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.1.0/24'),
+                        AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.2.0/24'),
+                        AttributeOpValue(attribute='Huawei-Vpn-Instance', op=':=', value='my-vrf')
+                    ],
+                    'groups': [UserGroup(groupname='my-group')]
+                }
+            ]
+        }
+
 class Group(BaseModel):
     groupname: constr(min_length=1)
     checks: List[AttributeOpValue] = []
@@ -67,10 +86,31 @@ class Group(BaseModel):
 
         return values
 
+    class Config:
+        schema_extra = {
+            'examples': [
+                {
+                    'groupname': 'my-group',
+                    'replies': [AttributeOpValue(attribute='Filter-Id', op=':=', value='10m')]
+                }
+            ]
+        }
+
 class Nas(BaseModel):
     nasname: IPvAnyAddress
     shortname: constr(min_length=1)
     secret: constr(min_length=1)
+
+    class Config:
+        schema_extra = {
+            'examples': [
+                {
+                    'nasname': '5.5.5.5',
+                    'shortname': 'my-nas',
+                    'secret': 'my-secret'
+                }
+            ]
+        }
 
 #
 # As per the Repository pattern, repositories implement the mapping
