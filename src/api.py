@@ -1,5 +1,6 @@
 from database import db_connection, db_tables
 from fastapi import FastAPI, APIRouter, Response, HTTPException
+from pydantic import BaseModel
 from pyfreeradius import User, Group, Nas
 from pyfreeradius import UserRepository, GroupRepository, NasRepository
 from typing import List
@@ -19,6 +20,12 @@ nas_repo = NasRepository(db_connection, db_tables)
 # after a resource has been created (POST) as per RFC 7231
 # and the "Link" header field (pagination) as per RFC 8288
 API_URL = 'http://localhost:8000'
+
+# Error model and responses
+class RadAPIError(BaseModel):
+    detail: str
+
+e404_response = {404: {'model': RadAPIError, 'description': 'Item not found'}}
 
 # Our API router and routes
 router = APIRouter()
@@ -51,21 +58,21 @@ async def get_groups(response: Response, from_groupname: str = None):
         response.headers['Link'] = f'<{API_URL}/groups?from_groupname={last_groupname}>; rel="next"'
     return groupnames
 
-@router.get('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas)
+@router.get('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas, responses={**e404_response})
 async def get_nas(nasname: str):
     nas = nas_repo.find_one(nasname)
     if not nas:
         raise HTTPException(404, 'Given NAS does not exist')
     return nas
 
-@router.get('/users/{username}', tags=['users'], status_code=200, response_model=User)
+@router.get('/users/{username}', tags=['users'], status_code=200, response_model=User, responses={**e404_response})
 async def get_user(username: str):
     user = user_repo.find_one(username)
     if not user:
         raise HTTPException(404, 'Given user does not exist')
     return user
 
-@router.get('/groups/{groupname}', tags=['groups'], status_code=200, response_model=Group)
+@router.get('/groups/{groupname}', tags=['groups'], status_code=200, response_model=Group, responses={**e404_response})
 async def get_group(groupname: str):
     group = group_repo.find_one(groupname)
     if not group:
@@ -107,21 +114,21 @@ async def post_group(group: Group, response: Response):
     response.headers['Location'] = f'{API_URL}/groups/{group.groupname}'
     return group
 
-@router.delete('/nas/{nasname}', tags=['nas'], status_code=204)
+@router.delete('/nas/{nasname}', tags=['nas'], status_code=204, responses={**e404_response})
 async def delete_nas(nasname: str):
     if not nas_repo.exists(nasname):
         raise HTTPException(404, 'Given NAS does not exist')
 
     nas_repo.remove(nasname)
 
-@router.delete('/users/{username}', tags=['users'], status_code=204)
+@router.delete('/users/{username}', tags=['users'], status_code=204, responses={**e404_response})
 async def delete_user(username: str):
     if not user_repo.exists(username):
         raise HTTPException(404, detail='Given user does not exist')
 
     user_repo.remove(username)
 
-@router.delete('/groups/{groupname}', tags=['groups'], status_code=204)
+@router.delete('/groups/{groupname}', tags=['groups'], status_code=204, responses={**e404_response})
 async def delete_group(groupname: str, ignore_users: bool = False):
     if not group_repo.exists(groupname):
         raise HTTPException(404, 'Given group does not exist')
