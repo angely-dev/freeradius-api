@@ -50,7 +50,7 @@ class User(BaseModel):
         'json_schema_extra': {
             'examples': [
                 {
-                'username': 'my-user',
+                    'username': 'my-user',
                     'checks': [
                         AttributeOpValue(attribute='Cleartext-Password', op=':=', value='my-pass').model_dump()
                     ],
