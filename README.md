@@ -223,6 +223,12 @@ curl -X 'DELETE' http://localhost:8000/users/my-user@my-realm
 curl -X 'DELETE' http://localhost:8000/groups/300m
 ```
 
+> **Reminder:**
+> * When a user is deleted, so are its attributes and its belonging to groups
+> * When a group is deleted, so are its attributes and its belonging to users ([if `ignore_users` is set](https://github.com/angely-dev/freeradius-api/blob/v1.4.0/src/api.py#L137-L139))
+> 
+> See [#semantic](https://github.com/angely-dev/freeradius-api#semantic).
+
 # How To
 
 **An instance of the FreeRADIUS server is NOT needed for testing.** The focus is on the FreeRADIUS database. As long as you have one, the API can run on a Python environment.
@@ -427,7 +433,7 @@ True
 False
 ```
 
-⚠️ If you use the `pyfreeradius` module directly, be cautious with the logic you implement over it (since none is implemented by the repositories and very little by the Pydantic models). Without any guards, this can lead to invalid states in the database (e.g., user added twice, belonging to a non-existing group). As a starting point, you may want to use the logic contained in the `sample.py` file (.e.g., `exists`, `has_users`).
+⚠️ If you use the `pyfreeradius` module directly like this, be cautious with the logic you implement over it (since none is implemented by the repositories and very little by the Pydantic models). Without any guards, this can lead to invalid states in the database (e.g., user added twice, belonging to a non-existing group). As a starting point, you may want to use the logic contained in the `sample.py` file (.e.g., `exists`, `has_users`).
 
 ### Unit tests
 
