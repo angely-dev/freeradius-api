@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from pydantic import BaseModel, IPvAnyAddress, constr, conint, root_validator
+from pydantic import BaseModel, IPvAnyAddress, constr, conint, model_validator
 from typing import List
 
 #
@@ -30,11 +30,11 @@ class User(BaseModel):
     replies: List[AttributeOpValue] = []
     groups: List[UserGroup] = []
 
-    @root_validator
-    def check_fields_on_init(cls, values):
-        checks = values.get('checks')
-        replies = values.get('replies')
-        groups = values.get('groups')
+    @model_validator(mode='after')
+    def check_fields_on_init(self):
+        checks = self.checks
+        replies = self.replies
+        groups = self.groups
 
         if not (checks or replies or groups):
             raise ValueError('User must have at least one check or one reply attribute'
@@ -44,10 +44,10 @@ class User(BaseModel):
         if not len(groupnames) == len(set(groupnames)):
             raise ValueError('Given groups have one or more duplicates')
 
-        return values
+        return self
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        'json_schema_extra': {
             'examples': [
                 {
                 'username': 'my-user',
@@ -64,6 +64,7 @@ class User(BaseModel):
                 }
             ]
         }
+    }
 
 class Group(BaseModel):
     groupname: constr(min_length=1)
@@ -71,11 +72,11 @@ class Group(BaseModel):
     replies: List[AttributeOpValue] = []
     users: List[GroupUser] = []
 
-    @root_validator
-    def check_fields_on_init(cls, values):
-        checks = values.get('checks')
-        replies = values.get('replies')
-        users = values.get('users')
+    @model_validator(mode='after')
+    def check_fields_on_init(self):
+        checks = self.checks
+        replies = self.replies
+        users = self.users
 
         if not (checks or replies):
             raise ValueError('Group must have at least one check or one reply attribute')
@@ -84,10 +85,10 @@ class Group(BaseModel):
         if not len(usernames) == len(set(usernames)):
             raise ValueError('Given users have one or more duplicates')
 
-        return values
+        return self
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        'json_schema_extra': {
             'examples': [
                 {
                     'groupname': 'my-group',
@@ -95,14 +96,15 @@ class Group(BaseModel):
                 }
             ]
         }
+    }
 
 class Nas(BaseModel):
     nasname: IPvAnyAddress
     shortname: constr(min_length=1)
     secret: constr(min_length=1)
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        'json_schema_extra': {
             'examples': [
                 {
                     'nasname': '5.5.5.5',
@@ -111,6 +113,7 @@ class Nas(BaseModel):
                 }
             ]
         }
+    }
 
 #
 # As per the Repository pattern, repositories implement the mapping
