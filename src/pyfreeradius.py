@@ -52,15 +52,15 @@ class User(BaseModel):
                 {
                 'username': 'my-user',
                     'checks': [
-                        AttributeOpValue(attribute='Cleartext-Password', op=':=', value='my-pass')
+                        AttributeOpValue(attribute='Cleartext-Password', op=':=', value='my-pass').model_dump()
                     ],
                     'replies': [
-                        AttributeOpValue(attribute='Framed-IP-Address', op=':=', value='10.0.0.1'),
-                        AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.1.0/24'),
-                        AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.2.0/24'),
-                        AttributeOpValue(attribute='Huawei-Vpn-Instance', op=':=', value='my-vrf')
+                        AttributeOpValue(attribute='Framed-IP-Address', op=':=', value='10.0.0.1').model_dump(),
+                        AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.1.0/24').model_dump(),
+                        AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.2.0/24').model_dump(),
+                        AttributeOpValue(attribute='Huawei-Vpn-Instance', op=':=', value='my-vrf').model_dump()
                     ],
-                    'groups': [UserGroup(groupname='my-group')]
+                    'groups': [UserGroup(groupname='my-group').model_dump()]
                 }
             ]
         }
@@ -92,7 +92,7 @@ class Group(BaseModel):
             'examples': [
                 {
                     'groupname': 'my-group',
-                    'replies': [AttributeOpValue(attribute='Filter-Id', op=':=', value='10m')]
+                    'replies': [AttributeOpValue(attribute='Filter-Id', op=':=', value='10m').model_dump()]
                 }
             ]
         }
