@@ -1,5 +1,5 @@
-[![Python 3.7+](https://img.shields.io/badge/Python-3.7+-success.svg)](https://www.python.org/downloads/release/python-370)
-[![License MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
+[![python](https://img.shields.io/badge/python-3.8+-success.svg)](https://devguide.python.org/versions)
+[![license](https://img.shields.io/badge/license-MIT-success.svg)](https://opensource.org/licenses/MIT)
 
 * [What is this project?](#what-is-this-project)
 * [What it is NOT?](#what-it-is-not)
