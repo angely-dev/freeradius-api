@@ -1,15 +1,9 @@
 from database import db_connection, db_tables
 from fastapi import FastAPI, APIRouter, Response, HTTPException
 from pydantic import BaseModel
-from pyfreeradius import User, Group, Nas
+from pyfreeradius import User, Group, Nas, UserUpdate, GroupUpdate, NasUpdate
 from pyfreeradius import UserRepository, GroupRepository, NasRepository
 from typing import List
-
-#
-# We want our REST API endpoints to be KISS!
-# Only GET/POST/DELETE methods are implemented; no PUT/PATCH methods.
-# To modify an existing object, first remove it and then recreate it.
-#
 
 # Load the FreeRADIUS repositories
 user_repo = UserRepository(db_connection, db_tables)
@@ -115,8 +109,8 @@ def post_group(group: Group, response: Response):
     response.headers['Location'] = f'{API_URL}/groups/{group.groupname}'
     return group
 
-@router.put('/nas/{nasname}', tags=['nas'], status_code=201, response_model=Nas, responses={**e409_response})
-def put_nas(nasname: str, nas: Nas, response: Response):
+@router.patch('/nas/{nasname}', tags=['nas'], status_code=201, response_model=Nas, responses={**e409_response})
+def patch_nas(nasname: str, nas: NasUpdate, response: Response):
     if not nas_repo.exists(nasname):
         raise HTTPException(404, 'Given NAS does not exist')
 
@@ -124,8 +118,8 @@ def put_nas(nasname: str, nas: Nas, response: Response):
     response.headers['Location'] = f'{API_URL}/nas/{nas.nasname}'
     return nas
 
-@router.put('/users/{username}', tags=['users'], status_code=201, response_model=User, responses={**e409_response})
-def put_user(username: str, user: User, response: Response):
+@router.patch('/users/{username}', tags=['users'], status_code=201, response_model=User, responses={**e409_response})
+def patch_user(username: str, user: UserUpdate, response: Response):
     if not user_repo.exists(username):
         raise HTTPException(404, detail='Given user does not exist')
 
@@ -133,8 +127,8 @@ def put_user(username: str, user: User, response: Response):
     response.headers['Location'] = f'{API_URL}/users/{user.username}'
     return user
 
-@router.put('/groups/{groupname}', tags=['groups'], status_code=201, response_model=Group, responses={**e409_response})
-def put_group(groupname: str, group: Group, response: Response):
+@router.patch('/groups/{groupname}', tags=['groups'], status_code=201, response_model=Group, responses={**e409_response})
+def patch_group(groupname: str, group: GroupUpdate, response: Response):
     if not group_repo.exists(groupname):
         raise HTTPException(404, 'Given group does not exist')
 

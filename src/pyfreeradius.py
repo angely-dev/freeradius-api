@@ -66,6 +66,47 @@ class User(BaseModel):
         }
     }
 
+class UserUpdate(BaseModel):
+    checks: List[AttributeOpValue] = None
+    replies: List[AttributeOpValue] = None
+    groups: List[UserGroup] = None
+
+    @model_validator(mode='after')
+    def check_fields_on_init(self):
+        checks = self.checks
+        replies = self.replies
+        groups = self.groups
+
+        if not (checks or replies or groups):
+            raise ValueError('User must have at least one check or one reply attribute'
+                             ', or must have at least one group')
+
+        if groups:
+            groupnames = [group.groupname for group in groups]
+            if not len(groupnames) == len(set(groupnames)):
+                raise ValueError('Given groups have one or more duplicates')
+
+        return self
+
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'checks': [
+                        AttributeOpValue(attribute='Cleartext-Password', op=':=', value='my-pass').model_dump()
+                    ],
+                    'replies': [
+                        AttributeOpValue(attribute='Framed-IP-Address', op=':=', value='10.0.0.1').model_dump(),
+                        AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.1.0/24').model_dump(),
+                        AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.2.0/24').model_dump(),
+                        AttributeOpValue(attribute='Huawei-Vpn-Instance', op=':=', value='my-vrf').model_dump()
+                    ],
+                    'groups': [UserGroup(groupname='my-group').model_dump()]
+                }
+            ]
+        }
+    }
+
 class Group(BaseModel):
     groupname: constr(min_length=1)
     checks: List[AttributeOpValue] = []
@@ -98,6 +139,37 @@ class Group(BaseModel):
         }
     }
 
+class GroupUpdate(BaseModel):
+    checks: List[AttributeOpValue] = None
+    replies: List[AttributeOpValue] = None
+    users: List[GroupUser] = None
+
+    @model_validator(mode='after')
+    def check_fields_on_init(self):
+        checks = self.checks
+        replies = self.replies
+        users = self.users
+
+        if not (checks or replies):
+            raise ValueError('Group must have at least one check or one reply attribute')
+
+        if users:
+            usernames = [user.username for user in users]
+            if not len(usernames) == len(set(usernames)):
+                raise ValueError('Given users have one or more duplicates')
+
+        return self
+
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'replies': [AttributeOpValue(attribute='Filter-Id', op=':=', value='10m').model_dump()]
+                }
+            ]
+        }
+    }
+
 class Nas(BaseModel):
     nasname: IPvAnyAddress
     shortname: constr(min_length=1)
@@ -108,6 +180,21 @@ class Nas(BaseModel):
             'examples': [
                 {
                     'nasname': '5.5.5.5',
+                    'shortname': 'my-nas',
+                    'secret': 'my-secret'
+                }
+            ]
+        }
+    }
+
+class NasUpdate(BaseModel):
+    shortname: constr(min_length=1) = None
+    secret: constr(min_length=1) = None
+
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
                     'shortname': 'my-nas',
                     'secret': 'my-secret'
                 }
@@ -241,22 +328,25 @@ class UserRepository(BaseRepository):
                 sql = f'INSERT INTO {self.radusergroup} (username, groupname, priority) VALUES (%s, %s, %s)'
                 db_cursor.execute(sql, (user.username, group.groupname, group.priority))
 
-    def update(self, username: str, user: User):
+    def update(self, username: str, user: UserUpdate):
         with self._db_cursor() as db_cursor:
-            db_cursor.execute(f'DELETE FROM {self.radcheck} WHERE username = %s', (username, ))
-            for check in user.checks:
-                sql = f'INSERT INTO {self.radcheck} (username, attribute, op, value) VALUES (%s, %s, %s, %s)'
-                db_cursor.execute(sql, (username, check.attribute, check.op, check.value))
+            if user.checks is not None:
+                db_cursor.execute(f'DELETE FROM {self.radcheck} WHERE username = %s', (username, ))
+                for check in user.checks:
+                    sql = f'INSERT INTO {self.radcheck} (username, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                    db_cursor.execute(sql, (username, check.attribute, check.op, check.value))
 
-            db_cursor.execute(f'DELETE FROM {self.radreply} WHERE username = %s', (username, ))
-            for reply in user.replies:
-                sql = f'INSERT INTO {self.radreply} (username, attribute, op, value) VALUES (%s, %s, %s, %s)'
-                db_cursor.execute(sql, (username, reply.attribute, reply.op, reply.value))
+            if user.replies is not None:
+                db_cursor.execute(f'DELETE FROM {self.radreply} WHERE username = %s', (username, ))
+                for reply in user.replies:
+                    sql = f'INSERT INTO {self.radreply} (username, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                    db_cursor.execute(sql, (username, reply.attribute, reply.op, reply.value))
 
-            db_cursor.execute(f'DELETE FROM {self.radusergroup} WHERE username = %s', (username, ))
-            for group in user.groups:
-                sql = f'INSERT INTO {self.radusergroup} (username, groupname, priority) VALUES (%s, %s, %s)'
-                db_cursor.execute(sql, (username, group.groupname, group.priority))
+            if user.groups is not None:
+                db_cursor.execute(f'DELETE FROM {self.radusergroup} WHERE username = %s', (username, ))
+                for group in user.groups:
+                    sql = f'INSERT INTO {self.radusergroup} (username, groupname, priority) VALUES (%s, %s, %s)'
+                    db_cursor.execute(sql, (username, group.groupname, group.priority))
 
     def remove(self, username: str):
         with self._db_cursor() as db_cursor:
@@ -357,22 +447,25 @@ class GroupRepository(BaseRepository):
                 sql = f'INSERT INTO {self.radusergroup} (groupname, username, priority) VALUES (%s, %s, %s)'
                 db_cursor.execute(sql, (group.groupname, user.username, user.priority))
 
-    def update(self, groupname: str, group: Group):
+    def update(self, groupname: str, group: GroupUpdate):
         with self._db_cursor() as db_cursor:
-            db_cursor.execute(f'DELETE FROM {self.radgroupcheck} WHERE groupname = %s', (groupname, ))
-            for check in group.checks:
-                sql = f'INSERT INTO {self.radgroupcheck} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)'
-                db_cursor.execute(sql, (groupname, check.attribute, check.op, check.value))
+            if group.checks is not None:
+                db_cursor.execute(f'DELETE FROM {self.radgroupcheck} WHERE groupname = %s', (groupname, ))
+                for check in group.checks:
+                    sql = f'INSERT INTO {self.radgroupcheck} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                    db_cursor.execute(sql, (groupname, check.attribute, check.op, check.value))
 
-            db_cursor.execute(f'DELETE FROM {self.radgroupreply} WHERE groupname = %s', (groupname, ))
-            for reply in group.replies:
-                sql = f'INSERT INTO {self.radgroupreply} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)'
-                db_cursor.execute(sql, (groupname, reply.attribute, reply.op, reply.value))
+            if group.replies is not None:
+                db_cursor.execute(f'DELETE FROM {self.radgroupreply} WHERE groupname = %s', (groupname, ))
+                for reply in group.replies:
+                    sql = f'INSERT INTO {self.radgroupreply} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                    db_cursor.execute(sql, (groupname, reply.attribute, reply.op, reply.value))
 
-            db_cursor.execute(f'DELETE FROM {self.radusergroup} WHERE groupname = %s', (groupname, ))
-            for user in group.users:
-                sql = f'INSERT INTO {self.radusergroup} (groupname, username, priority) VALUES (%s, %s, %s)'
-                db_cursor.execute(sql, (groupname, user.username, user.priority))
+            if group.users is not None:
+                db_cursor.execute(f'DELETE FROM {self.radusergroup} WHERE groupname = %s', (groupname, ))
+                for user in group.users:
+                    sql = f'INSERT INTO {self.radusergroup} (groupname, username, priority) VALUES (%s, %s, %s)'
+                    db_cursor.execute(sql, (groupname, user.username, user.priority))
 
     def remove(self, groupname: str):
         with self._db_cursor() as db_cursor:
@@ -435,12 +528,14 @@ class NasRepository(BaseRepository):
             db_cursor.execute(sql, (str(nas.nasname), nas.shortname, nas.secret))
             self.db_connection.commit()
 
-    def update(self, nasname: IPvAnyAddress, nas: Nas):
+    def update(self, nasname: IPvAnyAddress, nas: NasUpdate):
         with self._db_cursor() as db_cursor:
-            db_cursor.execute(f'DELETE FROM {self.nas} WHERE nasname = %s', (str(nasname), ))
-            sql = f'INSERT INTO {self.nas} (nasname, shortname, secret) VALUES (%s, %s, %s)'
-            db_cursor.execute(sql, (str(nasname), nas.shortname, nas.secret))
-            self.db_connection.commit()
+            if nas.shortname is not None:
+                sql = f'UPDATE {self.nas} SET shortname = %s WHERE nasname = %s'
+                db_cursor.execute(sql, (nas.shortname, str(nasname)))
+            if nas.secret is not None:
+                sql = f'UPDATE {self.nas} SET secret = %s WHERE nasname = %s'
+                db_cursor.execute(sql, (nas.secret, str(nasname)))
 
     def remove(self, nasname: IPvAnyAddress):
         with self._db_cursor() as db_cursor:
