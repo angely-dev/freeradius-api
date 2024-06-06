@@ -399,7 +399,6 @@ class NasRepository(BaseRepository):
         with self._db_cursor() as db_cursor:
             sql = f'INSERT INTO {self.nas} (nasname, shortname, secret) VALUES (%s, %s, %s)'
             db_cursor.execute(sql, (str(nas.nasname), nas.shortname, nas.secret))
-            self.db_connection.commit()
 
     def remove(self, nasname: IPvAnyAddress):
         with self._db_cursor() as db_cursor:
