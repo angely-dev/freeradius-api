@@ -115,6 +115,33 @@ def post_group(group: Group, response: Response):
     response.headers['Location'] = f'{API_URL}/groups/{group.groupname}'
     return group
 
+@router.put('/nas/{nasname}', tags=['nas'], status_code=201, response_model=Nas, responses={**e409_response})
+def put_nas(nasname: str, nas: Nas, response: Response):
+    if not nas_repo.exists(nasname):
+        raise HTTPException(404, 'Given NAS does not exist')
+
+    nas_repo.update(nasname, nas)
+    response.headers['Location'] = f'{API_URL}/nas/{nas.nasname}'
+    return nas
+
+@router.put('/users/{username}', tags=['users'], status_code=201, response_model=User, responses={**e409_response})
+def put_user(username: str, user: User, response: Response):
+    if not user_repo.exists(username):
+        raise HTTPException(404, detail='Given user does not exist')
+
+    user_repo.update(username, user)
+    response.headers['Location'] = f'{API_URL}/users/{user.username}'
+    return user
+
+@router.put('/groups/{groupname}', tags=['groups'], status_code=201, response_model=Group, responses={**e409_response})
+def put_group(groupname: str, group: Group, response: Response):
+    if not group_repo.exists(groupname):
+        raise HTTPException(404, 'Given group does not exist')
+
+    group_repo.update(groupname, group)
+    response.headers['Location'] = f'{API_URL}/groups/{group.groupname}'
+    return group
+
 @router.delete('/nas/{nasname}', tags=['nas'], status_code=204, responses={**e404_response})
 def delete_nas(nasname: str):
     if not nas_repo.exists(nasname):

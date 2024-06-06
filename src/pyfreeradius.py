@@ -241,6 +241,23 @@ class UserRepository(BaseRepository):
                 sql = f'INSERT INTO {self.radusergroup} (username, groupname, priority) VALUES (%s, %s, %s)'
                 db_cursor.execute(sql, (user.username, group.groupname, group.priority))
 
+    def update(self, username: str, user: User):
+        with self._db_cursor() as db_cursor:
+            db_cursor.execute(f'DELETE FROM {self.radcheck} WHERE username = %s', (username, ))
+            for check in user.checks:
+                sql = f'INSERT INTO {self.radcheck} (username, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                db_cursor.execute(sql, (username, check.attribute, check.op, check.value))
+
+            db_cursor.execute(f'DELETE FROM {self.radreply} WHERE username = %s', (username, ))
+            for reply in user.replies:
+                sql = f'INSERT INTO {self.radreply} (username, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                db_cursor.execute(sql, (username, reply.attribute, reply.op, reply.value))
+
+            db_cursor.execute(f'DELETE FROM {self.radusergroup} WHERE username = %s', (username, ))
+            for group in user.groups:
+                sql = f'INSERT INTO {self.radusergroup} (username, groupname, priority) VALUES (%s, %s, %s)'
+                db_cursor.execute(sql, (username, group.groupname, group.priority))
+
     def remove(self, username: str):
         with self._db_cursor() as db_cursor:
             db_cursor.execute(f'DELETE FROM {self.radcheck} WHERE username = %s', (username, ))
@@ -340,7 +357,24 @@ class GroupRepository(BaseRepository):
                 sql = f'INSERT INTO {self.radusergroup} (groupname, username, priority) VALUES (%s, %s, %s)'
                 db_cursor.execute(sql, (group.groupname, user.username, user.priority))
 
-    def remove(self, groupname: str) -> bool:
+    def update(self, groupname: str, group: Group):
+        with self._db_cursor() as db_cursor:
+            db_cursor.execute(f'DELETE FROM {self.radgroupcheck} WHERE groupname = %s', (groupname, ))
+            for check in group.checks:
+                sql = f'INSERT INTO {self.radgroupcheck} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                db_cursor.execute(sql, (groupname, check.attribute, check.op, check.value))
+
+            db_cursor.execute(f'DELETE FROM {self.radgroupreply} WHERE groupname = %s', (groupname, ))
+            for reply in group.replies:
+                sql = f'INSERT INTO {self.radgroupreply} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                db_cursor.execute(sql, (groupname, reply.attribute, reply.op, reply.value))
+
+            db_cursor.execute(f'DELETE FROM {self.radusergroup} WHERE groupname = %s', (groupname, ))
+            for user in group.users:
+                sql = f'INSERT INTO {self.radusergroup} (groupname, username, priority) VALUES (%s, %s, %s)'
+                db_cursor.execute(sql, (groupname, user.username, user.priority))
+
+    def remove(self, groupname: str):
         with self._db_cursor() as db_cursor:
             db_cursor.execute(f'DELETE FROM {self.radgroupcheck} WHERE groupname = %s', (groupname, ))
             db_cursor.execute(f'DELETE FROM {self.radgroupreply} WHERE groupname = %s', (groupname, ))
@@ -399,6 +433,13 @@ class NasRepository(BaseRepository):
         with self._db_cursor() as db_cursor:
             sql = f'INSERT INTO {self.nas} (nasname, shortname, secret) VALUES (%s, %s, %s)'
             db_cursor.execute(sql, (str(nas.nasname), nas.shortname, nas.secret))
+            self.db_connection.commit()
+
+    def update(self, nasname: IPvAnyAddress, nas: Nas):
+        with self._db_cursor() as db_cursor:
+            db_cursor.execute(f'DELETE FROM {self.nas} WHERE nasname = %s', (str(nasname), ))
+            sql = f'INSERT INTO {self.nas} (nasname, shortname, secret) VALUES (%s, %s, %s)'
+            db_cursor.execute(sql, (str(nasname), nas.shortname, nas.secret))
             self.db_connection.commit()
 
     def remove(self, nasname: IPvAnyAddress):

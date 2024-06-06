@@ -11,7 +11,9 @@ nas_repo = NasRepository(db_connection, db_tables)
 
 # Some dumb attributes for the tests
 checks = [AttributeOpValue(attribute='a', op=':=', value='b')]
+checks2 = [AttributeOpValue(attribute='a', op=':=', value='b2')]
 replies = [AttributeOpValue(attribute='c', op=':=', value='d')]
+replies2 = [AttributeOpValue(attribute='c', op=':=', value='d2')]
 
 class TestModelsAndRepositories(unittest.TestCase):
     def test_user(self):
@@ -26,6 +28,7 @@ class TestModelsAndRepositories(unittest.TestCase):
 
         # Model: valid instance
         u = User(username='u', checks=checks, replies=replies)
+        u2 = User(username='u', checks=checks2, replies=replies2)
 
         # Repository: adding
         self.assertFalse(user_repo.exists(u.username))
@@ -37,6 +40,10 @@ class TestModelsAndRepositories(unittest.TestCase):
         self.assertIn(u.username, user_repo.find_all_usernames())
         self.assertIn(u.username, user_repo.find_usernames())
         self.assertIn(u.username, user_repo.find_usernames(from_username='t'))
+
+        # Repository: updating
+        user_repo.update(u.username, u2)
+        self.assertEqual(user_repo.find_one(u.username), u2)
 
         # Repository: removing
         user_repo.remove(u.username)
@@ -55,6 +62,7 @@ class TestModelsAndRepositories(unittest.TestCase):
 
         # Model: valid instance
         g = Group(groupname='g', checks=checks, replies=replies)
+        g2 = Group(groupname='g', checks=checks2, replies=replies2)
 
         # Repository: adding
         self.assertFalse(group_repo.exists(g.groupname))
@@ -67,6 +75,10 @@ class TestModelsAndRepositories(unittest.TestCase):
         self.assertIn(g.groupname, group_repo.find_groupnames())
         self.assertIn(g.groupname, group_repo.find_groupnames(from_groupname='f'))
 
+        # Repository: updating
+        group_repo.update(g.groupname, g2)
+        self.assertEqual(group_repo.find_one(g.groupname), g2)
+
         # Repository: removing
         group_repo.remove(g.groupname)
         self.assertFalse(group_repo.exists(g.groupname))
@@ -78,6 +90,7 @@ class TestModelsAndRepositories(unittest.TestCase):
 
         # Model: valid instance
         n = Nas(nasname='1.1.1.1', shortname='sh', secret='se')
+        n2 = Nas(nasname='1.1.1.1', shortname='sh2', secret='se2')
 
         # Repository: adding
         self.assertFalse(nas_repo.exists(n.nasname))
@@ -89,6 +102,10 @@ class TestModelsAndRepositories(unittest.TestCase):
         self.assertIn(str(n.nasname), nas_repo.find_all_nasnames())
         self.assertIn(str(n.nasname), nas_repo.find_nasnames())
         self.assertIn(str(n.nasname), nas_repo.find_nasnames(from_nasname='1.1.1.0'))
+
+        # Repository: updating
+        nas_repo.update(n.nasname, n2)
+        self.assertEqual(nas_repo.find_one(n.nasname), n2)
 
         # Repository: removing
         nas_repo.remove(n.nasname)
