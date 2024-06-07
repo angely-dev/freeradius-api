@@ -109,7 +109,7 @@ def post_group(group: Group, response: Response):
     response.headers['Location'] = f'{API_URL}/groups/{group.groupname}'
     return group
 
-@router.patch('/nas/{nasname}', tags=['nas'], status_code=201, response_model=Nas, responses={**e409_response})
+@router.patch('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas, responses={**e409_response})
 def patch_nas(nasname: str, nas: NasUpdate, response: Response):
     if not nas_repo.exists(nasname):
         raise HTTPException(404, 'Given NAS does not exist')
@@ -118,7 +118,7 @@ def patch_nas(nasname: str, nas: NasUpdate, response: Response):
     response.headers['Location'] = f'{API_URL}/nas/{nas.nasname}'
     return nas
 
-@router.patch('/users/{username}', tags=['users'], status_code=201, response_model=User, responses={**e409_response})
+@router.patch('/users/{username}', tags=['users'], status_code=200, response_model=User, responses={**e409_response})
 def patch_user(username: str, user: UserUpdate, response: Response):
     if not user_repo.exists(username):
         raise HTTPException(404, detail='Given user does not exist')
@@ -127,7 +127,7 @@ def patch_user(username: str, user: UserUpdate, response: Response):
     response.headers['Location'] = f'{API_URL}/users/{user.username}'
     return user
 
-@router.patch('/groups/{groupname}', tags=['groups'], status_code=201, response_model=Group, responses={**e409_response})
+@router.patch('/groups/{groupname}', tags=['groups'], status_code=200, response_model=Group, responses={**e409_response})
 def patch_group(groupname: str, group: GroupUpdate, response: Response):
     if not group_repo.exists(groupname):
         raise HTTPException(404, 'Given group does not exist')
