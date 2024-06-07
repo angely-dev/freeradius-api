@@ -27,4 +27,4 @@ ENV PATH="/app/venv/bin:$PATH"
 
 COPY src /app/src
 
-CMD ["python", "-m", "uvicorn", "src.api:app", "--host", "0.0.0.0", "--log-level", "debug"]
+CMD ["python", "-m", "uvicorn", "src.api:app", "--host", "0.0.0.0"]

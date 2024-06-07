@@ -3,20 +3,22 @@ from ipaddress import IPv4Address
 
 from pydantic import ValidationError
 
-from src.config import RadTables
+from src.config import AppSettings
 from src.database import get_db_connection
 from src.pyfreeradius import (AttributeOpValue, Group, GroupRepository,
                               GroupUpdate, GroupUser, Nas, NasRepository,
                               NasUpdate, User, UserGroup, UserRepository,
                               UserUpdate)
 
-db_connection = get_db_connection('mysql', 'localhost', 'raduser', 'radpass', 'raddb')
-db_tables = RadTables()
+SETTINGS = AppSettings()
+
+# Initialize the database connection
+db_connection = get_db_connection(SETTINGS.db_type, SETTINGS.db_host, SETTINGS.db_username, SETTINGS.db_password, SETTINGS.db_database)
 
 # Load the FreeRADIUS repositories
-user_repo = UserRepository(db_connection, db_tables)
-group_repo = GroupRepository(db_connection, db_tables)
-nas_repo = NasRepository(db_connection, db_tables)
+user_repo = UserRepository(db_connection, SETTINGS.db_tables)
+group_repo = GroupRepository(db_connection, SETTINGS.db_tables)
+nas_repo = NasRepository(db_connection, SETTINGS.db_tables)
 
 # Some dumb attributes for the tests
 checks = [AttributeOpValue(attribute='a', op=':=', value='b')]
