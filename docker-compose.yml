@@ -1,0 +1,46 @@
+services:
+
+  # Our Python app "RadAPI":
+  # it will run on http://localhost:8000
+  freeradius-api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_USERNAME: raduser
+      DB_PASSWORD: radpass
+      DB_DATABASE: raddb
+    ports:
+      - "8000:8000"
+
+  # MySQL database with FreeRADIUS schema
+  db:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: mypass
+      MYSQL_USER: raduser
+      MYSQL_PASSWORD: radpass
+      MYSQL_DATABASE: raddb
+    volumes:
+      - ./test/db/mysql.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: mysqladmin ping
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    ports:
+      - "3306:3306"
+
+  # phpMyAdmin web interface (optional):
+  # it will run on http://localhost:8080 (root/mypass or raduser/radpass)
+  phpmyadmin:
+    image: phpmyadmin
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - PMA_HOST=db
+    ports:
+      - "8080:80"

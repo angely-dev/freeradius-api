@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from pydantic import BaseModel, IPvAnyAddress, constr, conint, model_validator
 from typing import List
+
+from pydantic import BaseModel, IPvAnyAddress, conint, constr, model_validator
+
+from .config import RadTables
 
 #
 # The Pydantic models implement the UML class diagram;
@@ -206,14 +209,6 @@ class NasUpdate(BaseModel):
 # between the Domain Objects (the Pydantic models) and the database.
 # The BaseRepository is the abstract superclass of the repositories.
 #
-
-class RadTables(BaseModel):
-    radcheck: str = 'radcheck'
-    radreply: str = 'radreply'
-    radgroupcheck: str = 'radgroupcheck'
-    radgroupreply: str = 'radgroupreply'
-    radusergroup: str = 'radusergroup'
-    nas: str = 'nas'
 
 class BaseRepository(ABC):
     # Number of items per page
