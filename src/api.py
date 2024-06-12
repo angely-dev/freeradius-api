@@ -123,6 +123,10 @@ def patch_user(username: str, user: UserUpdate, response: Response):
     if not user_repo.exists(username):
         raise HTTPException(404, detail='Given user does not exist')
 
+    for group in user.groups or []:
+        if not group_repo.exists(group.groupname):
+            raise HTTPException(422, f"Given group '{group.groupname}' does not exist: create it first")
+
     user_repo.update(username, user)
     response.headers['Location'] = f'{API_URL}/users/{user.username}'
     return user
@@ -131,6 +135,10 @@ def patch_user(username: str, user: UserUpdate, response: Response):
 def patch_group(groupname: str, group: GroupUpdate, response: Response):
     if not group_repo.exists(groupname):
         raise HTTPException(404, 'Given group does not exist')
+
+    for user in group.users or []:
+        if not user_repo.exists(user.username):
+            raise HTTPException(422, f"Given user '{user.username}' does not exist: create it first")
 
     group_repo.update(groupname, group)
     response.headers['Location'] = f'{API_URL}/groups/{group.groupname}'
