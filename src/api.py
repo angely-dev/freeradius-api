@@ -1,15 +1,9 @@
 from database import db_connection, db_tables
 from fastapi import FastAPI, APIRouter, Response, HTTPException
 from pydantic import BaseModel
-from pyfreeradius import User, Group, Nas
+from pyfreeradius import User, Group, Nas, UserUpdate, GroupUpdate, NasUpdate
 from pyfreeradius import UserRepository, GroupRepository, NasRepository
 from typing import List
-
-#
-# We want our REST API endpoints to be KISS!
-# Only GET/POST/DELETE methods are implemented; no PUT/PATCH methods.
-# To modify an existing object, first remove it and then recreate it.
-#
 
 # Load the FreeRADIUS repositories
 user_repo = UserRepository(db_connection, db_tables)
@@ -112,6 +106,45 @@ def post_group(group: Group, response: Response):
             raise HTTPException(422, f"Given user '{user.username}' does not exist: create it first")
 
     group_repo.add(group)
+    response.headers['Location'] = f'{API_URL}/groups/{group.groupname}'
+    return group
+
+@router.patch('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas, responses={**e409_response})
+def patch_nas(nasname: str, nas: NasUpdate, response: Response):
+    if not nas_repo.exists(nasname):
+        raise HTTPException(404, 'Given NAS does not exist')
+
+    nas_repo.update(nasname, nas)
+    response.headers['Location'] = f'{API_URL}/nas/{nas.nasname}'
+    return nas
+
+@router.patch('/users/{username}', tags=['users'], status_code=200, response_model=User, responses={**e409_response})
+def patch_user(username: str, user: UserUpdate, response: Response):
+    if not user_repo.exists(username):
+        raise HTTPException(404, detail='Given user does not exist')
+
+    for group in user.groups or []:
+        if not group_repo.exists(group.groupname):
+            raise HTTPException(422, f"Given group '{group.groupname}' does not exist: create it first")
+
+    user_repo.update(username, user)
+    response.headers['Location'] = f'{API_URL}/users/{user.username}'
+    return user
+
+@router.patch('/groups/{groupname}', tags=['groups'], status_code=200, response_model=Group, responses={**e409_response})
+def patch_group(groupname: str, group: GroupUpdate, response: Response):
+    if not group_repo.exists(groupname):
+        raise HTTPException(404, 'Given group does not exist')
+
+    for user in group.users or []:
+        if not user_repo.exists(user.username):
+            raise HTTPException(422, f"Given user '{user.username}' does not exist: create it first")
+
+    current_group = group_repo.find_one(groupname)
+    if (not current_group.replies and group.replies == []) and (not current_group.checks and group.checks == []):
+        raise HTTPException(422, 'Group must have at least one check or one reply attribute')
+
+    group_repo.update(groupname, group)
     response.headers['Location'] = f'{API_URL}/groups/{group.groupname}'
     return group
 

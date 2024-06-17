@@ -1,6 +1,6 @@
 from database import db_connection, db_tables
 from pydantic import ValidationError
-from pyfreeradius import User, Group, Nas, AttributeOpValue, UserGroup, GroupUser
+from pyfreeradius import User, Group, Nas, AttributeOpValue, UserGroup, GroupUser, UserUpdate, GroupUpdate, NasUpdate
 from pyfreeradius import UserRepository, GroupRepository, NasRepository
 import unittest
 
@@ -11,7 +11,9 @@ nas_repo = NasRepository(db_connection, db_tables)
 
 # Some dumb attributes for the tests
 checks = [AttributeOpValue(attribute='a', op=':=', value='b')]
+checks2 = [AttributeOpValue(attribute='a', op=':=', value='b2')]
 replies = [AttributeOpValue(attribute='c', op=':=', value='d')]
+replies2 = [AttributeOpValue(attribute='c', op=':=', value='d2')]
 
 class TestModelsAndRepositories(unittest.TestCase):
     def test_user(self):
@@ -37,6 +39,20 @@ class TestModelsAndRepositories(unittest.TestCase):
         self.assertIn(u.username, user_repo.find_all_usernames())
         self.assertIn(u.username, user_repo.find_usernames())
         self.assertIn(u.username, user_repo.find_usernames(from_username='t'))
+
+        # Repository: updating
+        user_repo.update(u.username, UserUpdate(checks=checks2))
+        db_u = user_repo.find_one(u.username)
+        self.assertEqual(db_u.checks, checks2)
+        self.assertEqual(db_u.replies, replies)
+
+        user_repo.update(u.username, UserUpdate(replies=replies2))
+        db_u = user_repo.find_one(u.username)
+        self.assertEqual(db_u.checks, checks2)
+        self.assertEqual(db_u.replies, replies2)
+
+        # with self.assertRaises(HTTPException):
+        #     user_repo.update(u.username, UserUpdate(checks=[], replies=[], groups=[]))
 
         # Repository: removing
         user_repo.remove(u.username)
@@ -67,6 +83,20 @@ class TestModelsAndRepositories(unittest.TestCase):
         self.assertIn(g.groupname, group_repo.find_groupnames())
         self.assertIn(g.groupname, group_repo.find_groupnames(from_groupname='f'))
 
+        # Repository: updating
+        group_repo.update(g.groupname, GroupUpdate(checks=checks2))
+        db_g = group_repo.find_one(g.groupname)
+        self.assertEqual(db_g.checks, checks2)
+        self.assertEqual(db_g.replies, replies)
+
+        group_repo.update(g.groupname, GroupUpdate(replies=replies2))
+        db_g = group_repo.find_one(g.groupname)
+        self.assertEqual(db_g.checks, checks2)
+        self.assertEqual(db_g.replies, replies2)
+
+        # with self.assertRaises(HTTPException):
+        #     group_repo.update(g.groupname, GroupUpdate(checks=[], replies=[]))
+
         # Repository: removing
         group_repo.remove(g.groupname)
         self.assertFalse(group_repo.exists(g.groupname))
@@ -89,6 +119,17 @@ class TestModelsAndRepositories(unittest.TestCase):
         self.assertIn(str(n.nasname), nas_repo.find_all_nasnames())
         self.assertIn(str(n.nasname), nas_repo.find_nasnames())
         self.assertIn(str(n.nasname), nas_repo.find_nasnames(from_nasname='1.1.1.0'))
+
+        # Repository: updating
+        nas_repo.update(n.nasname, NasUpdate(shortname='sh2'))
+        db_n = nas_repo.find_one(n.nasname)
+        self.assertEqual(db_n.shortname, 'sh2')
+        self.assertEqual(db_n.secret, 'se')
+
+        nas_repo.update(n.nasname, NasUpdate(secret='se2'))
+        db_n = nas_repo.find_one(n.nasname)
+        self.assertEqual(db_n.shortname, 'sh2')
+        self.assertEqual(db_n.secret, 'se2')
 
         # Repository: removing
         nas_repo.remove(n.nasname)
