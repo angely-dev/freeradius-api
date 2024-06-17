@@ -140,6 +140,10 @@ def patch_group(groupname: str, group: GroupUpdate, response: Response):
         if not user_repo.exists(user.username):
             raise HTTPException(422, f"Given user '{user.username}' does not exist: create it first")
 
+    current_group = group_repo.find_one(groupname)
+    if (not current_group.replies and group.replies == []) and (not current_group.checks and group.checks == []):
+        raise HTTPException(422, 'Group must have at least one check or one reply attribute')
+
     group_repo.update(groupname, group)
     response.headers['Location'] = f'{API_URL}/groups/{group.groupname}'
     return group

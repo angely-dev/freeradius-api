@@ -51,6 +51,9 @@ class TestModelsAndRepositories(unittest.TestCase):
         self.assertEqual(db_u.checks, checks2)
         self.assertEqual(db_u.replies, replies2)
 
+        # with self.assertRaises(HTTPException):
+        #     user_repo.update(u.username, UserUpdate(checks=[], replies=[], groups=[]))
+
         # Repository: removing
         user_repo.remove(u.username)
         self.assertFalse(user_repo.exists(u.username))
@@ -90,6 +93,9 @@ class TestModelsAndRepositories(unittest.TestCase):
         db_g = group_repo.find_one(g.groupname)
         self.assertEqual(db_g.checks, checks2)
         self.assertEqual(db_g.replies, replies2)
+
+        # with self.assertRaises(HTTPException):
+        #     group_repo.update(g.groupname, GroupUpdate(checks=[], replies=[]))
 
         # Repository: removing
         group_repo.remove(g.groupname)

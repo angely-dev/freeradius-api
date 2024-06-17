@@ -77,9 +77,8 @@ class UserUpdate(BaseModel):
         replies = self.replies
         groups = self.groups
 
-        if not (checks or replies or groups):
-            raise ValueError('User must have at least one check or one reply attribute'
-                             ', or must have at least one group')
+        if checks is None and replies is None and groups is None:
+            raise ValueError('Request must have at least one check, one reply attribute or one group')
 
         if groups:
             groupnames = [group.groupname for group in groups]
@@ -150,8 +149,8 @@ class GroupUpdate(BaseModel):
         replies = self.replies
         users = self.users
 
-        if not (checks or replies or users):
-            raise ValueError('Group must have at least one check, one reply attribute or one group attribute')
+        if checks is None and replies is None and users is None:
+            raise ValueError('Request must have at least one check, one reply attribute or one group')
 
         if users:
             usernames = [user.username for user in users]
