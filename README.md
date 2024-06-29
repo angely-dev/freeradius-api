@@ -440,45 +440,43 @@ False
 If desired, feel free to run the unit tests to ensure your install is fully working:
 
 ```bash
-$ python3 -m unittest test.py
-.....
-----------------------------------------------------------------------
-Ran 5 tests in 0.137s
-
-OK
+/tmp/freeradius-api$ pip install -r requirements-dev.txt
+/tmp/freeradius-api$ cd src/
 ```
-
-And optionally, for measuring code coverage:
 
 ```bash
-$ pip install coverage
+/tmp/freeradius-api/src$ pytest --cov-report term --cov=. tests/
+======================================================== test session starts =========================================================
+platform linux -- Python 3.10.12, pytest-8.2.2, pluggy-1.5.0
+rootdir: /tmp/freeradius-api/src
+plugins: anyio-4.4.0, cov-5.0.0
+collected 10 items
 
-# First we (re)run the unit tests
-$ coverage run -m unittest test.py
-.....
-----------------------------------------------------------------------
-Ran 5 tests in 0.095s
+tests/test_api.py .....                                                                                                        [ 50%]
+tests/test_pyfreeradius.py .....                                                                                               [100%]
 
-OK
+---------- coverage: platform linux, python 3.10.12-final-0 ----------
+Name                         Stmts   Miss  Cover
+------------------------------------------------
+api.py                         103      0   100%
+database.py                      5      0   100%
+pyfreeradius.py                252      0   100%
+sample.py                       33     33     0%
+tests/__init__.py                0      0   100%
+tests/test_api.py               85      0   100%
+tests/test_pyfreeradius.py      76      0   100%
+------------------------------------------------
+TOTAL                          554     33    94%
 
-# Then we generate the CLI report
-$ coverage report
-Name              Stmts   Miss  Cover
--------------------------------------
-database.py           5      0   100%
-pyfreeradius.py     204      0   100%
-test.py              70      0   100%
--------------------------------------
-TOTAL               279      0   100%
 
-# We can also generate a more detailed HTML report
-$ coverage html
-Wrote HTML report to htmlcov/index.html
+========================================================= 10 passed in 1.27s =========================================================
 ```
 
-The HTML report is then browsable:
+To generate an HTML report for checking not covered lines:
 
-![image](https://user-images.githubusercontent.com/4362224/202913672-2e8205f5-a0ca-409f-bad6-14a93191972f.png)
+```bash
+/tmp/freeradius-api/src$ pytest --cov-report html --cov=. tests/
+```
 
 # Keyset pagination
 
