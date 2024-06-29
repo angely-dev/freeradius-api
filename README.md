@@ -433,7 +433,7 @@ True
 False
 ```
 
-⚠️ If you use the `pyfreeradius` module directly like this, be cautious with the logic you implement over it (since none is implemented by the repositories and very little by the Pydantic models). Without any guards, this can lead to invalid states in the database (e.g., user added twice, belonging to a non-existing group). As a starting point, you may want to use the logic contained in the `sample.py` file (.e.g., `exists`, `has_users`).
+⚠️ If you use the `pyfreeradius` module directly like this, be cautious with the logic you implement over it (since none is implemented by the repositories and very little by the Pydantic models). Without any guards, this can lead to invalid states in the database (e.g., user added twice, belonging to a non-existing group). As a starting point, you may want to use the logic contained in the `sample.py` file (e.g., `exists`, `has_users`).
 
 ### Unit tests
 
