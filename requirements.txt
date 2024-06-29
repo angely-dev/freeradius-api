@@ -1,15 +1,15 @@
 # For pyfreeradius module
 pydantic
 
-# Uncomment the appropriate line to load the DB-API 2.0 (PEP 249) enabled driver
+# All supported DB-API 2.0 (PEP 249) drivers
 mysql-connector-python
 #pymysql
-#pymssql
-#psycopg2
-#sqllite3
-#oracledb
-#<DRIVER>
+pymssql
+psycopg2
+#sqlite3  # already included in Python standard library
+oracledb
 
 # For FastAPI app
 fastapi
 uvicorn
+pydantic-settings

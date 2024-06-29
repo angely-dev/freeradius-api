@@ -2,3 +2,6 @@
 .coverage
 __pycache__/
 venv/
+
+# IDE
+.idea/
