@@ -450,10 +450,10 @@ If desired, feel free to run the unit tests to ensure your install is fully work
 platform linux -- Python 3.10.12, pytest-8.2.2, pluggy-1.5.0
 rootdir: /tmp/freeradius-api/src
 plugins: anyio-4.4.0, cov-5.0.0
-collected 10 items
+collected 14 items                                                                                                                   
 
-tests/test_api.py .....                                                                                                        [ 50%]
-tests/test_pyfreeradius.py .....                                                                                               [100%]
+tests/test_api.py .....                                                                                                        [ 35%]
+tests/test_pyfreeradius.py .........                                                                                           [100%]
 
 ---------- coverage: platform linux, python 3.10.12-final-0 ----------
 Name                         Stmts   Miss  Cover
@@ -464,12 +464,12 @@ pyfreeradius.py                252      0   100%
 sample.py                       33     33     0%
 tests/__init__.py                0      0   100%
 tests/test_api.py               85      0   100%
-tests/test_pyfreeradius.py      76      0   100%
+tests/test_pyfreeradius.py      86      0   100%
 ------------------------------------------------
-TOTAL                          554     33    94%
+TOTAL                          564     33    94%
 
 
-========================================================= 10 passed in 1.27s =========================================================
+========================================================= 14 passed in 1.27s =========================================================
 ```
 
 To generate an HTML report for checking not covered lines:
