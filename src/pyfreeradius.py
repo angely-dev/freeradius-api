@@ -12,18 +12,22 @@ from typing_extensions import Annotated
 # with two models (one for each direction).
 #
 
+
 class AttributeOpValue(BaseModel):
     attribute: Annotated[str, StringConstraints(min_length=1)]
     op: Annotated[str, StringConstraints(min_length=1)]
     value: Annotated[str, StringConstraints(min_length=1)]
 
+
 class UserGroup(BaseModel):
     groupname: Annotated[str, StringConstraints(min_length=1)]
     priority: Annotated[int, Field(ge=1)] = 1
 
+
 class GroupUser(BaseModel):
     username: Annotated[str, StringConstraints(min_length=1)]
     priority: Annotated[int, Field(ge=1)] = 1
+
 
 class User(BaseModel):
     username: Annotated[str, StringConstraints(min_length=1)]
@@ -31,37 +35,39 @@ class User(BaseModel):
     replies: List[AttributeOpValue] = []
     groups: List[UserGroup] = []
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_fields_on_init(self):
         if not (self.checks or self.replies or self.groups):
-            raise ValueError('User must have at least one check or one reply attribute'
-                             ', or must have at least one group')
+            raise ValueError(
+                "User must have at least one check or one reply attribute, or must have at least one group"
+            )
 
         groupnames = [group.groupname for group in self.groups]
         if not len(groupnames) == len(set(groupnames)):
-            raise ValueError('Given groups have one or more duplicates')
+            raise ValueError("Given groups have one or more duplicates")
 
         return self
 
     model_config = {
-        'json_schema_extra': {
-            'examples': [
+        "json_schema_extra": {
+            "examples": [
                 {
-                    'username': 'my-user',
-                    'checks': [
-                        AttributeOpValue(attribute='Cleartext-Password', op=':=', value='my-pass').model_dump()
+                    "username": "my-user",
+                    "checks": [
+                        AttributeOpValue(attribute="Cleartext-Password", op=":=", value="my-pass").model_dump()
                     ],
-                    'replies': [
-                        AttributeOpValue(attribute='Framed-IP-Address', op=':=', value='10.0.0.1').model_dump(),
-                        AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.1.0/24').model_dump(),
-                        AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.2.0/24').model_dump(),
-                        AttributeOpValue(attribute='Huawei-Vpn-Instance', op=':=', value='my-vrf').model_dump()
+                    "replies": [
+                        AttributeOpValue(attribute="Framed-IP-Address", op=":=", value="10.0.0.1").model_dump(),
+                        AttributeOpValue(attribute="Framed-Route", op="+=", value="192.168.1.0/24").model_dump(),
+                        AttributeOpValue(attribute="Framed-Route", op="+=", value="192.168.2.0/24").model_dump(),
+                        AttributeOpValue(attribute="Huawei-Vpn-Instance", op=":=", value="my-vrf").model_dump(),
                     ],
-                    'groups': [UserGroup(groupname='my-group').model_dump()]
+                    "groups": [UserGroup(groupname="my-group").model_dump()],
                 }
             ]
         }
     }
+
 
 class Group(BaseModel):
     groupname: Annotated[str, StringConstraints(min_length=1)]
@@ -69,27 +75,28 @@ class Group(BaseModel):
     replies: List[AttributeOpValue] = []
     users: List[GroupUser] = []
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_fields_on_init(self):
         if not (self.checks or self.replies):
-            raise ValueError('Group must have at least one check or one reply attribute')
+            raise ValueError("Group must have at least one check or one reply attribute")
 
         usernames = [user.username for user in self.users]
         if not len(usernames) == len(set(usernames)):
-            raise ValueError('Given users have one or more duplicates')
+            raise ValueError("Given users have one or more duplicates")
 
         return self
 
     model_config = {
-        'json_schema_extra': {
-            'examples': [
+        "json_schema_extra": {
+            "examples": [
                 {
-                    'groupname': 'my-group',
-                    'replies': [AttributeOpValue(attribute='Filter-Id', op=':=', value='10m').model_dump()]
+                    "groupname": "my-group",
+                    "replies": [AttributeOpValue(attribute="Filter-Id", op=":=", value="10m").model_dump()],
                 }
             ]
         }
     }
+
 
 class Nas(BaseModel):
     nasname: IPvAnyAddress
@@ -97,16 +104,9 @@ class Nas(BaseModel):
     secret: Annotated[str, StringConstraints(min_length=1)]
 
     model_config = {
-        'json_schema_extra': {
-            'examples': [
-                {
-                    'nasname': '5.5.5.5',
-                    'shortname': 'my-nas',
-                    'secret': 'my-secret'
-                }
-            ]
-        }
+        "json_schema_extra": {"examples": [{"nasname": "5.5.5.5", "shortname": "my-nas", "secret": "my-secret"}]}
     }
+
 
 #
 # As per the Repository pattern, repositories implement the mapping
@@ -114,13 +114,15 @@ class Nas(BaseModel):
 # The BaseRepository is the abstract superclass of the repositories.
 #
 
+
 class RadTables(BaseModel):
-    radcheck: str = 'radcheck'
-    radreply: str = 'radreply'
-    radgroupcheck: str = 'radgroupcheck'
-    radgroupreply: str = 'radgroupreply'
-    radusergroup: str = 'radusergroup'
-    nas: str = 'nas'
+    radcheck: str = "radcheck"
+    radreply: str = "radreply"
+    radgroupcheck: str = "radgroupcheck"
+    radgroupreply: str = "radgroupreply"
+    radusergroup: str = "radusergroup"
+    nas: str = "nas"
+
 
 class BaseRepository(ABC):
     # Number of items per page
@@ -147,6 +149,7 @@ class BaseRepository(ABC):
         finally:
             self.db_connection.commit()
             db_cursor.close()
+
 
 class UserRepository(BaseRepository):
     def __init__(self, db_connection, db_tables: RadTables):
@@ -197,7 +200,7 @@ class UserRepository(BaseRepository):
                   UNION SELECT DISTINCT username FROM {self.radusergroup}
                 ) u WHERE username > %s ORDER BY username LIMIT {self._PER_PAGE}
             """
-            db_cursor.execute(sql, (from_username, ))
+            db_cursor.execute(sql, (from_username,))
             usernames = [username for username, in db_cursor.fetchall()]
             return usernames
 
@@ -206,16 +209,16 @@ class UserRepository(BaseRepository):
             return None
 
         with self._db_cursor() as db_cursor:
-            sql = f'SELECT attribute, op, value FROM {self.radcheck} WHERE username = %s'
-            db_cursor.execute(sql, (username, ))
+            sql = f"SELECT attribute, op, value FROM {self.radcheck} WHERE username = %s"
+            db_cursor.execute(sql, (username,))
             checks = [AttributeOpValue(attribute=a, op=o, value=v) for a, o, v in db_cursor.fetchall()]
 
-            sql = f'SELECT attribute, op, value FROM {self.radreply} WHERE username = %s'
-            db_cursor.execute(sql, (username, ))
+            sql = f"SELECT attribute, op, value FROM {self.radreply} WHERE username = %s"
+            db_cursor.execute(sql, (username,))
             replies = [AttributeOpValue(attribute=a, op=o, value=v) for a, o, v in db_cursor.fetchall()]
 
-            sql = f'SELECT groupname, priority FROM {self.radusergroup} WHERE username = %s'
-            db_cursor.execute(sql, (username, ))
+            sql = f"SELECT groupname, priority FROM {self.radusergroup} WHERE username = %s"
+            db_cursor.execute(sql, (username,))
             groups = [UserGroup(groupname=g, priority=p) for g, p in db_cursor.fetchall()]
 
             return User(username=username, checks=checks, replies=replies, groups=groups)
@@ -223,22 +226,23 @@ class UserRepository(BaseRepository):
     def add(self, user: User):
         with self._db_cursor() as db_cursor:
             for check in user.checks:
-                sql = f'INSERT INTO {self.radcheck} (username, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                sql = f"INSERT INTO {self.radcheck} (username, attribute, op, value) VALUES (%s, %s, %s, %s)"
                 db_cursor.execute(sql, (user.username, check.attribute, check.op, check.value))
 
             for reply in user.replies:
-                sql = f'INSERT INTO {self.radreply} (username, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                sql = f"INSERT INTO {self.radreply} (username, attribute, op, value) VALUES (%s, %s, %s, %s)"
                 db_cursor.execute(sql, (user.username, reply.attribute, reply.op, reply.value))
 
             for group in user.groups:
-                sql = f'INSERT INTO {self.radusergroup} (username, groupname, priority) VALUES (%s, %s, %s)'
+                sql = f"INSERT INTO {self.radusergroup} (username, groupname, priority) VALUES (%s, %s, %s)"
                 db_cursor.execute(sql, (user.username, group.groupname, group.priority))
 
     def remove(self, username: str):
         with self._db_cursor() as db_cursor:
-            db_cursor.execute(f'DELETE FROM {self.radcheck} WHERE username = %s', (username, ))
-            db_cursor.execute(f'DELETE FROM {self.radreply} WHERE username = %s', (username, ))
-            db_cursor.execute(f'DELETE FROM {self.radusergroup} WHERE username = %s', (username, ))
+            db_cursor.execute(f"DELETE FROM {self.radcheck} WHERE username = %s", (username,))
+            db_cursor.execute(f"DELETE FROM {self.radreply} WHERE username = %s", (username,))
+            db_cursor.execute(f"DELETE FROM {self.radusergroup} WHERE username = %s", (username,))
+
 
 class GroupRepository(BaseRepository):
     def __init__(self, db_connection, db_tables: RadTables):
@@ -289,15 +293,15 @@ class GroupRepository(BaseRepository):
                   UNION SELECT DISTINCT groupname FROM {self.radusergroup}
                 ) g WHERE groupname > %s ORDER BY groupname LIMIT {self._PER_PAGE}
             """
-            db_cursor.execute(sql, (from_groupname, ))
+            db_cursor.execute(sql, (from_groupname,))
             groupnames = [groupname for groupname, in db_cursor.fetchall()]
             return groupnames
 
     def has_users(self, groupname: str) -> bool:
         with self._db_cursor() as db_cursor:
-            sql = f'SELECT COUNT(DISTINCT username) FROM {self.radusergroup} WHERE groupname = %s'
-            db_cursor.execute(sql,(groupname, ))
-            count, = db_cursor.fetchone()
+            sql = f"SELECT COUNT(DISTINCT username) FROM {self.radusergroup} WHERE groupname = %s"
+            db_cursor.execute(sql, (groupname,))
+            (count,) = db_cursor.fetchone()
             return count > 0
 
     def find_one(self, groupname: str) -> Group:
@@ -305,16 +309,16 @@ class GroupRepository(BaseRepository):
             return None
 
         with self._db_cursor() as db_cursor:
-            sql = f'SELECT attribute, op, value FROM {self.radgroupcheck} WHERE groupname = %s'
-            db_cursor.execute(sql, (groupname, ))
+            sql = f"SELECT attribute, op, value FROM {self.radgroupcheck} WHERE groupname = %s"
+            db_cursor.execute(sql, (groupname,))
             checks = [AttributeOpValue(attribute=a, op=o, value=v) for a, o, v in db_cursor.fetchall()]
 
-            sql = f'SELECT attribute, op, value FROM {self.radgroupreply} WHERE groupname = %s'
-            db_cursor.execute(sql, (groupname, ))
+            sql = f"SELECT attribute, op, value FROM {self.radgroupreply} WHERE groupname = %s"
+            db_cursor.execute(sql, (groupname,))
             replies = [AttributeOpValue(attribute=a, op=o, value=v) for a, o, v in db_cursor.fetchall()]
 
-            sql = f'SELECT username, priority FROM {self.radusergroup} WHERE groupname = %s'
-            db_cursor.execute(sql, (groupname, ))
+            sql = f"SELECT username, priority FROM {self.radusergroup} WHERE groupname = %s"
+            db_cursor.execute(sql, (groupname,))
             users = [GroupUser(username=u, priority=p) for u, p in db_cursor.fetchall()]
 
             return Group(groupname=groupname, checks=checks, replies=replies, users=users)
@@ -322,22 +326,23 @@ class GroupRepository(BaseRepository):
     def add(self, group: Group):
         with self._db_cursor() as db_cursor:
             for check in group.checks:
-                sql = f'INSERT INTO {self.radgroupcheck} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                sql = f"INSERT INTO {self.radgroupcheck} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)"
                 db_cursor.execute(sql, (group.groupname, check.attribute, check.op, check.value))
 
             for reply in group.replies:
-                sql = f'INSERT INTO {self.radgroupreply} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)'
+                sql = f"INSERT INTO {self.radgroupreply} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)"
                 db_cursor.execute(sql, (group.groupname, reply.attribute, reply.op, reply.value))
 
             for user in group.users:
-                sql = f'INSERT INTO {self.radusergroup} (groupname, username, priority) VALUES (%s, %s, %s)'
+                sql = f"INSERT INTO {self.radusergroup} (groupname, username, priority) VALUES (%s, %s, %s)"
                 db_cursor.execute(sql, (group.groupname, user.username, user.priority))
 
     def remove(self, groupname: str) -> bool:
         with self._db_cursor() as db_cursor:
-            db_cursor.execute(f'DELETE FROM {self.radgroupcheck} WHERE groupname = %s', (groupname, ))
-            db_cursor.execute(f'DELETE FROM {self.radgroupreply} WHERE groupname = %s', (groupname, ))
-            db_cursor.execute(f'DELETE FROM {self.radusergroup} WHERE groupname = %s', (groupname, ))
+            db_cursor.execute(f"DELETE FROM {self.radgroupcheck} WHERE groupname = %s", (groupname,))
+            db_cursor.execute(f"DELETE FROM {self.radgroupreply} WHERE groupname = %s", (groupname,))
+            db_cursor.execute(f"DELETE FROM {self.radusergroup} WHERE groupname = %s", (groupname,))
+
 
 class NasRepository(BaseRepository):
     def __init__(self, db_connection, db_tables: RadTables):
@@ -345,14 +350,14 @@ class NasRepository(BaseRepository):
 
     def exists(self, nasname: IPvAnyAddress) -> bool:
         with self._db_cursor() as db_cursor:
-            sql = f'SELECT COUNT(DISTINCT nasname) FROM {self.nas} WHERE nasname = %s'
-            db_cursor.execute(sql, (str(nasname), ))
-            count, = db_cursor.fetchone()
+            sql = f"SELECT COUNT(DISTINCT nasname) FROM {self.nas} WHERE nasname = %s"
+            db_cursor.execute(sql, (str(nasname),))
+            (count,) = db_cursor.fetchone()
             return count > 0
 
     def find_all_nasnames(self) -> List[str]:
         with self._db_cursor() as db_cursor:
-            sql = f'SELECT DISTINCT nasname FROM {self.nas}'
+            sql = f"SELECT DISTINCT nasname FROM {self.nas}"
             db_cursor.execute(sql)
             nasnames = [nasname for nasname, in db_cursor.fetchall()]
             return nasnames
@@ -374,7 +379,7 @@ class NasRepository(BaseRepository):
         with self._db_cursor() as db_cursor:
             sql = f"""SELECT DISTINCT nasname FROM {self.nas}
                       WHERE nasname > %s ORDER BY nasname LIMIT {self._PER_PAGE}"""
-            db_cursor.execute(sql, (str(from_nasname), ))
+            db_cursor.execute(sql, (str(from_nasname),))
             nasnames = [nasname for nasname, in db_cursor.fetchall()]
             return nasnames
 
@@ -383,16 +388,16 @@ class NasRepository(BaseRepository):
             return None
 
         with self._db_cursor() as db_cursor:
-            sql = f'SELECT nasname, shortname, secret FROM {self.nas} WHERE nasname = %s'
-            db_cursor.execute(sql, (str(nasname), ))
+            sql = f"SELECT nasname, shortname, secret FROM {self.nas} WHERE nasname = %s"
+            db_cursor.execute(sql, (str(nasname),))
             n, sh, se = db_cursor.fetchone()
             return Nas(nasname=n, shortname=sh, secret=se)
 
     def add(self, nas: Nas):
         with self._db_cursor() as db_cursor:
-            sql = f'INSERT INTO {self.nas} (nasname, shortname, secret) VALUES (%s, %s, %s)'
+            sql = f"INSERT INTO {self.nas} (nasname, shortname, secret) VALUES (%s, %s, %s)"
             db_cursor.execute(sql, (str(nas.nasname), nas.shortname, nas.secret))
 
     def remove(self, nasname: IPvAnyAddress):
         with self._db_cursor() as db_cursor:
-            db_cursor.execute(f'DELETE FROM {self.nas} WHERE nasname = %s', (str(nasname), ))
+            db_cursor.execute(f"DELETE FROM {self.nas} WHERE nasname = %s", (str(nasname),))
