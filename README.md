@@ -445,31 +445,45 @@ If desired, feel free to run the unit tests to ensure your install is fully work
 ```
 
 ```bash
-/tmp/freeradius-api/src$ pytest --cov-report term --cov=. tests/
+/tmp/freeradius-api/src$ pytest -v --cov-report term --cov=. tests/
 ======================================================== test session starts =========================================================
-platform linux -- Python 3.10.12, pytest-8.2.2, pluggy-1.5.0
-rootdir: /tmp/freeradius-api/src
+platform linux -- Python 3.10.12, pytest-8.3.2, pluggy-1.5.0 -- /tmp/freeradius-api/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /tmp/freeradius-api
+configfile: pyproject.toml
 plugins: anyio-4.4.0, cov-5.0.0
 collected 14 items                                                                                                                   
 
-tests/test_api.py .....                                                                                                        [ 35%]
-tests/test_pyfreeradius.py .........                                                                                           [100%]
+tests/test_api.py::test_read_root PASSED                                                                                       [  7%]
+tests/test_api.py::test_nas PASSED                                                                                             [ 14%]
+tests/test_api.py::test_group PASSED                                                                                           [ 21%]
+tests/test_api.py::test_user PASSED                                                                                            [ 28%]
+tests/test_api.py::test_delete_user_group PASSED                                                                               [ 35%]
+tests/test_pyfreeradius.py::test_invalid_user PASSED                                                                           [ 42%]
+tests/test_pyfreeradius.py::test_invalid_group PASSED                                                                          [ 50%]
+tests/test_pyfreeradius.py::test_invalid_usergroup PASSED                                                                      [ 57%]
+tests/test_pyfreeradius.py::test_invalid_nas PASSED                                                                            [ 64%]
+tests/test_pyfreeradius.py::test_valid_user PASSED                                                                             [ 71%]
+tests/test_pyfreeradius.py::test_valid_group PASSED                                                                            [ 78%]
+tests/test_pyfreeradius.py::test_valid_nas PASSED                                                                              [ 85%]
+tests/test_pyfreeradius.py::test_usergroup PASSED                                                                              [ 92%]
+tests/test_pyfreeradius.py::test_groupuser PASSED                                                                              [100%]
 
 ---------- coverage: platform linux, python 3.10.12-final-0 ----------
 Name                         Stmts   Miss  Cover
 ------------------------------------------------
 api.py                         103      0   100%
 database.py                      5      0   100%
-pyfreeradius.py                252      0   100%
+pyfreeradius.py                247      0   100%
 sample.py                       33     33     0%
 tests/__init__.py                0      0   100%
 tests/test_api.py               85      0   100%
 tests/test_pyfreeradius.py      86      0   100%
 ------------------------------------------------
-TOTAL                          564     33    94%
+TOTAL                          559     33    94%
 
 
-========================================================= 14 passed in 1.27s =========================================================
+========================================================= 14 passed in 1.19s =========================================================
 ```
 
 To generate an HTML report for checking not covered lines:
