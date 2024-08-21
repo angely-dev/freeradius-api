@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from pydantic import BaseModel, IPvAnyAddress, constr, conint, model_validator
+from pydantic import BaseModel, IPvAnyAddress, StringConstraints, Field, model_validator
 from typing import List
+from typing_extensions import Annotated
 
 #
 # The Pydantic models implement the UML class diagram;
@@ -12,20 +13,20 @@ from typing import List
 #
 
 class AttributeOpValue(BaseModel):
-    attribute: constr(min_length=1)
-    op: constr(min_length=1)
-    value: constr(min_length=1)
+    attribute: Annotated[str, StringConstraints(min_length=1)]
+    op: Annotated[str, StringConstraints(min_length=1)]
+    value: Annotated[str, StringConstraints(min_length=1)]
 
 class UserGroup(BaseModel):
-    groupname: constr(min_length=1)
-    priority: conint(ge=1) = 1
+    groupname: Annotated[str, StringConstraints(min_length=1)]
+    priority: Annotated[int, Field(ge=1)] = 1
 
 class GroupUser(BaseModel):
-    username: constr(min_length=1)
-    priority: conint(ge=1) = 1
+    username: Annotated[str, StringConstraints(min_length=1)]
+    priority: Annotated[int, Field(ge=1)] = 1
 
 class User(BaseModel):
-    username: constr(min_length=1)
+    username: Annotated[str, StringConstraints(min_length=1)]
     checks: List[AttributeOpValue] = []
     replies: List[AttributeOpValue] = []
     groups: List[UserGroup] = []
@@ -67,7 +68,7 @@ class User(BaseModel):
     }
 
 class Group(BaseModel):
-    groupname: constr(min_length=1)
+    groupname: Annotated[str, StringConstraints(min_length=1)]
     checks: List[AttributeOpValue] = []
     replies: List[AttributeOpValue] = []
     users: List[GroupUser] = []
@@ -100,8 +101,8 @@ class Group(BaseModel):
 
 class Nas(BaseModel):
     nasname: IPvAnyAddress
-    shortname: constr(min_length=1)
-    secret: constr(min_length=1)
+    shortname: Annotated[str, StringConstraints(min_length=1)]
+    secret: Annotated[str, StringConstraints(min_length=1)]
 
     model_config = {
         'json_schema_extra': {
