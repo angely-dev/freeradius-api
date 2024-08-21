@@ -33,15 +33,11 @@ class User(BaseModel):
 
     @model_validator(mode='after')
     def check_fields_on_init(self):
-        checks = self.checks
-        replies = self.replies
-        groups = self.groups
-
-        if not (checks or replies or groups):
+        if not (self.checks or self.replies or self.groups):
             raise ValueError('User must have at least one check or one reply attribute'
                              ', or must have at least one group')
 
-        groupnames = [group.groupname for group in groups]
+        groupnames = [group.groupname for group in self.groups]
         if not len(groupnames) == len(set(groupnames)):
             raise ValueError('Given groups have one or more duplicates')
 
@@ -75,14 +71,10 @@ class Group(BaseModel):
 
     @model_validator(mode='after')
     def check_fields_on_init(self):
-        checks = self.checks
-        replies = self.replies
-        users = self.users
-
-        if not (checks or replies):
+        if not (self.checks or self.replies):
             raise ValueError('Group must have at least one check or one reply attribute')
 
-        usernames = [user.username for user in users]
+        usernames = [user.username for user in self.users]
         if not len(usernames) == len(set(usernames)):
             raise ValueError('Given users have one or more duplicates')
 
