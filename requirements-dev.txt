@@ -1,3 +1,4 @@
+black
 httpx
 pytest
 pytest-cov
