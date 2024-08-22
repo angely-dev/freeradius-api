@@ -20,9 +20,9 @@ jobs:
         sudo systemctl start mysql.service
     - name: Init database
       run: |
-        mysql -uroot -proot < docker/freeradius-mysql/1-database.sql
-        mysql -uroot -proot < docker/freeradius-mysql/2-schema.sql
-        mysql -uroot -proot < docker/freeradius-mysql/3-setup.sql
+        mysql -v -uroot -proot < docker/freeradius-mysql/1-database.sql
+        mysql -v -uroot -proot < docker/freeradius-mysql/2-schema.sql
+        mysql -v -uroot -proot < docker/freeradius-mysql/3-setup.sql
     - name: Add mydb alias for localhost (used by database.py)
       run: |
         echo "127.0.0.1 mydb" | sudo tee -a /etc/hosts
