@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pydantic import BaseModel, StringConstraints, Field, model_validator
-from typing_extensions import Annotated
+from typing import Annotated
 
 #
 # The Pydantic models implement the UML class diagram;
