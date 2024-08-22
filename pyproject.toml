@@ -1,2 +1,12 @@
 [tool.black]
 line-length = 119
+
+[[tool.mypy.overrides]]
+module = [
+    "fastapi",
+    "fastapi.testclient",
+    "mysql.connector",
+    "pydantic",
+    "pytest",
+]
+ignore_missing_imports = true
