@@ -173,7 +173,7 @@ class UserRepository(BaseRepository):
             usernames = [username for username, in db_cursor.fetchall()]
             return usernames
 
-    def find_usernames(self, from_username: str = None) -> List[str]:
+    def find_usernames(self, from_username: str | None = None) -> List[str]:
         if not from_username:
             return self._find_first_usernames()
         return self._find_next_usernames(from_username)
@@ -204,7 +204,7 @@ class UserRepository(BaseRepository):
             usernames = [username for username, in db_cursor.fetchall()]
             return usernames
 
-    def find_one(self, username: str) -> User:
+    def find_one(self, username: str) -> User | None:
         if not self.exists(username):
             return None
 
@@ -266,7 +266,7 @@ class GroupRepository(BaseRepository):
             groupnames = [groupname for groupname, in db_cursor.fetchall()]
             return groupnames
 
-    def find_groupnames(self, from_groupname: str = None) -> List[str]:
+    def find_groupnames(self, from_groupname: str | None = None) -> List[str]:
         if not from_groupname:
             return self._find_first_groupnames()
         return self._find_next_groupnames(from_groupname)
@@ -304,7 +304,7 @@ class GroupRepository(BaseRepository):
             (count,) = db_cursor.fetchone()
             return count > 0
 
-    def find_one(self, groupname: str) -> Group:
+    def find_one(self, groupname: str) -> Group | None:
         if not self.exists(groupname):
             return None
 
@@ -337,7 +337,7 @@ class GroupRepository(BaseRepository):
                 sql = f"INSERT INTO {self.radusergroup} (groupname, username, priority) VALUES (%s, %s, %s)"
                 db_cursor.execute(sql, (group.groupname, user.username, user.priority))
 
-    def remove(self, groupname: str) -> bool:
+    def remove(self, groupname: str):
         with self._db_cursor() as db_cursor:
             db_cursor.execute(f"DELETE FROM {self.radgroupcheck} WHERE groupname = %s", (groupname,))
             db_cursor.execute(f"DELETE FROM {self.radgroupreply} WHERE groupname = %s", (groupname,))
@@ -362,7 +362,7 @@ class NasRepository(BaseRepository):
             nasnames = [nasname for nasname, in db_cursor.fetchall()]
             return nasnames
 
-    def find_nasnames(self, from_nasname: str = None) -> List[str]:
+    def find_nasnames(self, from_nasname: str | None = None) -> List[str]:
         if not from_nasname:
             return self._find_first_nasnames()
         return self._find_next_nasnames(from_nasname)
@@ -383,7 +383,7 @@ class NasRepository(BaseRepository):
             nasnames = [nasname for nasname, in db_cursor.fetchall()]
             return nasnames
 
-    def find_one(self, nasname: str) -> Nas:
+    def find_one(self, nasname: str) -> Nas | None:
         if not self.exists(nasname):
             return None
 
