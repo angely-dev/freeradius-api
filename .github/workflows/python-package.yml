@@ -15,6 +15,18 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+    - name: Start MySQL service
+      run: |
+        sudo systemctl start mysql.service
+    - name: Init database
+      run: |
+        mysql -uroot -proot < docker/freeradius-mysql/1-database.sql
+        mysql -uroot -proot < docker/freeradius-mysql/2-schema.sql
+        mysql -uroot -proot < docker/freeradius-mysql/3-setup.sql
+    - name: Add mydb alias for localhost (used by database.py)
+      run: |
+        echo "127.0.0.1 mydb" | sudo tee -a /etc/hosts
+        ping -c 3 mydb
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
@@ -30,3 +42,6 @@ jobs:
     - name: Check static typing
       run: |
         mypy .
+    - name: Run tests
+      run: |
+        pytest -v --cov-report term --cov=. src/tests/
