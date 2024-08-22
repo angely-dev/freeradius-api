@@ -115,9 +115,9 @@ def test_valid_nas():
 
     # Repository: finding
     assert nas_repo.find_one(n.nasname) == n
-    assert str(n.nasname) in nas_repo.find_all_nasnames()
-    assert str(n.nasname) in nas_repo.find_nasnames()
-    assert str(n.nasname) in nas_repo.find_nasnames(from_nasname="1.1.1.0")
+    assert n.nasname in nas_repo.find_all_nasnames()
+    assert n.nasname in nas_repo.find_nasnames()
+    assert n.nasname in nas_repo.find_nasnames(from_nasname="1.1.1.0")
 
     # Repository: removing
     nas_repo.remove(n.nasname)
