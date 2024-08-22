@@ -1,4 +1,5 @@
 black
 httpx
+mypy
 pytest
 pytest-cov
