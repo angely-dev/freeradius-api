@@ -3,7 +3,6 @@ from fastapi import FastAPI, APIRouter, Response, HTTPException
 from pydantic import BaseModel
 from pyfreeradius import User, Group, Nas
 from pyfreeradius import UserRepository, GroupRepository, NasRepository
-from typing import List
 
 #
 # We want our REST API endpoints to be KISS!
@@ -39,7 +38,7 @@ def read_root():
     return {"Welcome!": f"API docs is available at {API_URL}/docs"}
 
 
-@router.get("/nas", tags=["nas"], status_code=200, response_model=List[str])
+@router.get("/nas", tags=["nas"], status_code=200, response_model=list[str])
 def get_nases(response: Response, from_nasname: str | None = None):
     nasnames = nas_repo.find_nasnames(from_nasname)
     if nasnames:
@@ -48,7 +47,7 @@ def get_nases(response: Response, from_nasname: str | None = None):
     return nasnames
 
 
-@router.get("/users", tags=["users"], status_code=200, response_model=List[str])
+@router.get("/users", tags=["users"], status_code=200, response_model=list[str])
 def get_users(response: Response, from_username: str | None = None):
     usernames = user_repo.find_usernames(from_username)
     if usernames:
@@ -57,7 +56,7 @@ def get_users(response: Response, from_username: str | None = None):
     return usernames
 
 
-@router.get("/groups", tags=["groups"], status_code=200, response_model=List[str])
+@router.get("/groups", tags=["groups"], status_code=200, response_model=list[str])
 def get_groups(response: Response, from_groupname: str | None = None):
     groupnames = group_repo.find_groupnames(from_groupname)
     if groupnames:

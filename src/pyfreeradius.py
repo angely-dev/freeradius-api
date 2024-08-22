@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pydantic import BaseModel, StringConstraints, Field, model_validator
-from typing import List
 from typing_extensions import Annotated
 
 #
@@ -31,9 +30,9 @@ class GroupUser(BaseModel):
 
 class User(BaseModel):
     username: Annotated[str, StringConstraints(min_length=1)]
-    checks: List[AttributeOpValue] = []
-    replies: List[AttributeOpValue] = []
-    groups: List[UserGroup] = []
+    checks: list[AttributeOpValue] = []
+    replies: list[AttributeOpValue] = []
+    groups: list[UserGroup] = []
 
     @model_validator(mode="after")
     def check_fields_on_init(self):
@@ -71,9 +70,9 @@ class User(BaseModel):
 
 class Group(BaseModel):
     groupname: Annotated[str, StringConstraints(min_length=1)]
-    checks: List[AttributeOpValue] = []
-    replies: List[AttributeOpValue] = []
-    users: List[GroupUser] = []
+    checks: list[AttributeOpValue] = []
+    replies: list[AttributeOpValue] = []
+    users: list[GroupUser] = []
 
     @model_validator(mode="after")
     def check_fields_on_init(self):
@@ -164,7 +163,7 @@ class UserRepository(BaseRepository):
             counts = [count for count, in db_cursor.fetchall()]
             return sum(counts) > 0
 
-    def find_all_usernames(self) -> List[str]:
+    def find_all_usernames(self) -> list[str]:
         with self._db_cursor() as db_cursor:
             sql = f"""SELECT DISTINCT username FROM {self.radcheck}
                 UNION SELECT DISTINCT username FROM {self.radreply}
@@ -173,12 +172,12 @@ class UserRepository(BaseRepository):
             usernames = [username for username, in db_cursor.fetchall()]
             return usernames
 
-    def find_usernames(self, from_username: str | None = None) -> List[str]:
+    def find_usernames(self, from_username: str | None = None) -> list[str]:
         if not from_username:
             return self._find_first_usernames()
         return self._find_next_usernames(from_username)
 
-    def _find_first_usernames(self) -> List[str]:
+    def _find_first_usernames(self) -> list[str]:
         with self._db_cursor() as db_cursor:
             sql = f"""
                 SELECT username FROM (
@@ -191,7 +190,7 @@ class UserRepository(BaseRepository):
             usernames = [username for username, in db_cursor.fetchall()]
             return usernames
 
-    def _find_next_usernames(self, from_username: str) -> List[str]:
+    def _find_next_usernames(self, from_username: str) -> list[str]:
         with self._db_cursor() as db_cursor:
             sql = f"""
                 SELECT username FROM (
@@ -257,7 +256,7 @@ class GroupRepository(BaseRepository):
             counts = [count for count, in db_cursor.fetchall()]
             return sum(counts) > 0
 
-    def find_all_groupnames(self) -> List[str]:
+    def find_all_groupnames(self) -> list[str]:
         with self._db_cursor() as db_cursor:
             sql = f"""SELECT DISTINCT groupname FROM {self.radgroupcheck}
                 UNION SELECT DISTINCT groupname FROM {self.radgroupreply}
@@ -266,12 +265,12 @@ class GroupRepository(BaseRepository):
             groupnames = [groupname for groupname, in db_cursor.fetchall()]
             return groupnames
 
-    def find_groupnames(self, from_groupname: str | None = None) -> List[str]:
+    def find_groupnames(self, from_groupname: str | None = None) -> list[str]:
         if not from_groupname:
             return self._find_first_groupnames()
         return self._find_next_groupnames(from_groupname)
 
-    def _find_first_groupnames(self) -> List[str]:
+    def _find_first_groupnames(self) -> list[str]:
         with self._db_cursor() as db_cursor:
             sql = f"""
                 SELECT groupname FROM (
@@ -284,7 +283,7 @@ class GroupRepository(BaseRepository):
             groupnames = [groupname for groupname, in db_cursor.fetchall()]
             return groupnames
 
-    def _find_next_groupnames(self, from_groupname: str) -> List[str]:
+    def _find_next_groupnames(self, from_groupname: str) -> list[str]:
         with self._db_cursor() as db_cursor:
             sql = f"""
                 SELECT groupname FROM (
@@ -355,19 +354,19 @@ class NasRepository(BaseRepository):
             (count,) = db_cursor.fetchone()
             return count > 0
 
-    def find_all_nasnames(self) -> List[str]:
+    def find_all_nasnames(self) -> list[str]:
         with self._db_cursor() as db_cursor:
             sql = f"SELECT DISTINCT nasname FROM {self.nas}"
             db_cursor.execute(sql)
             nasnames = [nasname for nasname, in db_cursor.fetchall()]
             return nasnames
 
-    def find_nasnames(self, from_nasname: str | None = None) -> List[str]:
+    def find_nasnames(self, from_nasname: str | None = None) -> list[str]:
         if not from_nasname:
             return self._find_first_nasnames()
         return self._find_next_nasnames(from_nasname)
 
-    def _find_first_nasnames(self) -> List[str]:
+    def _find_first_nasnames(self) -> list[str]:
         with self._db_cursor() as db_cursor:
             sql = f"""SELECT DISTINCT nasname FROM {self.nas}
                       ORDER BY nasname LIMIT {self._PER_PAGE}"""
@@ -375,7 +374,7 @@ class NasRepository(BaseRepository):
             nasnames = [nasname for nasname, in db_cursor.fetchall()]
             return nasnames
 
-    def _find_next_nasnames(self, from_nasname: str) -> List[str]:
+    def _find_next_nasnames(self, from_nasname: str) -> list[str]:
         with self._db_cursor() as db_cursor:
             sql = f"""SELECT DISTINCT nasname FROM {self.nas}
                       WHERE nasname > %s ORDER BY nasname LIMIT {self._PER_PAGE}"""
