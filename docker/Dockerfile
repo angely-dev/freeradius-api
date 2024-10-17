@@ -8,6 +8,7 @@ RUN pip install -r requirements.txt
 COPY src/pyfreeradius/ ./pyfreeradius/
 COPY src/settings.py .
 COPY src/database.py .
+COPY src/dependencies.py .
 COPY src/api.py .
 # For initial data
 COPY docker/freeradius-mysql/initial_data.py .
