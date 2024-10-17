@@ -20,7 +20,7 @@ A lightweight REST API on top of the [FreeRADIUS](https://freeradius.org) databa
 * It provides a bit of logic and [#semantic](https://github.com/angely-dev/freeradius-api#semantic) to ensure some data consistency
 * It aims to be KISS so that it can be plugged or forked for adding more business logic
 
-Based on [Pydantic](https://github.com/pydantic/pydantic) and [FastAPI](https://github.com/tiangolo/fastapi). But you can stick with the [`pyfreeradius`](https://github.com/angely-dev/freeradius-api/blob/master/src/pyfreeradius.py) module and build your own API over it.
+Based on [Pydantic](https://github.com/pydantic/pydantic) and [FastAPI](https://github.com/tiangolo/fastapi). But you can stick with the [`pyfreeradius`](https://github.com/angely-dev/freeradius-api/blob/master/src/pyfreeradius) package and build your own API over it.
 
 > **Why Python?** Because it tends to be the de-facto standard in network automation, yet the model-centric approach taken here allows for other implementations. Feel free to adapt!
 
@@ -35,11 +35,11 @@ Based on [Pydantic](https://github.com/pydantic/pydantic) and [FastAPI](https://
 
 # Quick demo
 
-## Using the module
+## Using the package
 
-The `pyfreeradius` module works with Python objects.
+The `pyfreeradius` package works with Python objects.
 
-See [#module-only](#module-only).
+See [#package-only](#package-only).
 
 ## Using the API
 
@@ -300,7 +300,7 @@ pip install -r requirements.txt
 * Edit [`src/database.py`](https://github.com/angely-dev/freeradius-api/blob/master/src/database.py) to set your DB settings (driver, connection and table names):
 
 ```py
-from pyfreeradius import RadTables
+from pyfreeradius.repositories import RadTables
 
 # Uncomment the appropriate line to load the DB-API 2.0 (PEP 249) enabled driver
 from mysql.connector import connect
@@ -344,9 +344,9 @@ INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 
 ![image](https://user-images.githubusercontent.com/4362224/202903625-096d00f4-957e-4eed-8e35-c7489673c4be.png)
 
-### Module only
+### Package only
 
-You are free to use the core module without the API.
+You are free to use the core package without the API.
 
 The steps are the exact same except you don't run the API at the end.
 I did provide a [`sample.py`](https://github.com/angely-dev/freeradius-api/blob/master/src/sample.py) file:
@@ -355,8 +355,8 @@ I did provide a [`sample.py`](https://github.com/angely-dev/freeradius-api/blob/
 
 ```py
 from database import db_connection, db_tables
-from pyfreeradius import User, Group, Nas, AttributeOpValue, UserGroup
-from pyfreeradius import UserRepository, GroupRepository, NasRepository
+from pyfreeradius.models import User, Group, Nas, AttributeOpValue, UserGroup
+from pyfreeradius.repositories import UserRepository, GroupRepository, NasRepository
 
 # Load the FreeRADIUS repositories
 user_repo = UserRepository(db_connection, db_tables)
@@ -433,7 +433,7 @@ True
 False
 ```
 
-⚠️ If you use the `pyfreeradius` module directly like this, be cautious with the logic you implement over it (since none is implemented by the repositories and very little by the Pydantic models). Without any guards, this can lead to invalid states in the database (e.g., user added twice, belonging to a non-existing group). As a starting point, you may want to use the logic contained in the `sample.py` file (e.g., `exists`, `has_users`).
+⚠️ If you use the `pyfreeradius` package directly like this, be cautious with the logic you implement over it (since none is implemented by the repositories and very little by the Pydantic models). Without any guards, this can lead to invalid states in the database (e.g., user added twice, belonging to a non-existing group). As a starting point, you may want to use the logic contained in the `sample.py` file (e.g., `exists`, `has_users`).
 
 ### Unit tests
 
@@ -501,7 +501,7 @@ As of [v1.3.0](https://github.com/angely-dev/freeradius-api/tree/v1.3.0), result
 
 In the era of infinite scroll, the latter is generally preferred over the former. Not only is it better at performance but also simpler to implement.
 
-## Using the module
+## Using the package
 
 Here is an example for fetching usernames (the same applies for groupnames and nasnames):
 
