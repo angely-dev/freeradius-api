@@ -1,13 +1,14 @@
-from database import db_connection, db_tables
+from database import db_connect
 from pydantic import ValidationError
 from pyfreeradius.models import User, Group, Nas, AttributeOpValue, UserGroup, GroupUser
 from pyfreeradius.repositories import UserRepository, GroupRepository, NasRepository
 from pytest import raises
 
 # Load the FreeRADIUS repositories
-user_repo = UserRepository(db_connection, db_tables)
-group_repo = GroupRepository(db_connection, db_tables)
-nas_repo = NasRepository(db_connection, db_tables)
+db_connection = db_connect()
+user_repo = UserRepository(db_connection)
+group_repo = GroupRepository(db_connection)
+nas_repo = NasRepository(db_connection)
 
 # Some dumb attributes for the tests
 checks = [AttributeOpValue(attribute="a", op=":=", value="b")]

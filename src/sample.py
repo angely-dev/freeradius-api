@@ -1,11 +1,12 @@
-from database import db_connection, db_tables
+from database import db_connect
 from pyfreeradius.models import User, Group, Nas, AttributeOpValue, UserGroup
 from pyfreeradius.repositories import UserRepository, GroupRepository, NasRepository
 
 # Load the FreeRADIUS repositories
-user_repo = UserRepository(db_connection, db_tables)
-group_repo = GroupRepository(db_connection, db_tables)
-nas_repo = NasRepository(db_connection, db_tables)
+db_connection = db_connect()
+user_repo = UserRepository(db_connection)
+group_repo = GroupRepository(db_connection)
+nas_repo = NasRepository(db_connection)
 
 # Add some NASes
 n1 = Nas(nasname="1.1.1.1", shortname="my-super-nas", secret="my-super-secret")

@@ -1,8 +1,9 @@
-from database import db_connection, db_tables
+from database import db_connect
 from fastapi import FastAPI, APIRouter, Response, HTTPException
 from pydantic import BaseModel
 from pyfreeradius.models import User, Group, Nas
 from pyfreeradius.repositories import UserRepository, GroupRepository, NasRepository
+from settings import API_URL
 
 #
 # We want our REST API endpoints to be KISS!
@@ -11,14 +12,10 @@ from pyfreeradius.repositories import UserRepository, GroupRepository, NasReposi
 #
 
 # Load the FreeRADIUS repositories
-user_repo = UserRepository(db_connection, db_tables)
-group_repo = GroupRepository(db_connection, db_tables)
-nas_repo = NasRepository(db_connection, db_tables)
-
-# API_URL will be used to set the "Location" header field
-# after a resource has been created (POST) as per RFC 7231
-# and the "Link" header field (pagination) as per RFC 8288
-API_URL = "http://localhost:8000"
+db_connection = db_connect()
+user_repo = UserRepository(db_connection)
+group_repo = GroupRepository(db_connection)
+nas_repo = NasRepository(db_connection)
 
 
 # Error model and responses
