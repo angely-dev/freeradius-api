@@ -274,7 +274,7 @@ wget https://github.com/angely-dev/freeradius-api/archive/refs/heads/master.zip
 unzip master.zip
 cd freeradius-api-master
 #
-virtualenv venv
+python3 -m venv venv
 source venv/bin/activate
 ```
 
@@ -297,43 +297,54 @@ mysql-connector-python
 pip install -r requirements.txt
 ```
 
-* Edit [`src/database.py`](https://github.com/angely-dev/freeradius-api/blob/master/src/database.py) to set your DB settings (driver, connection and table names):
+* Edit [`src/settings.py`](https://github.com/angely-dev/freeradius-api/blob/master/src/settings.py) to set your DB settings (driver, connection and table names):
 
 ```py
-from pyfreeradius.repositories import RadTables
+# Uncomment the appropriate line matching your DB-API 2.0 (PEP 249) enabled driver
+DB_DRIVER = "mysql.connector"
+# DB_DRIVER = "pymysql"
+# DB_DRIVER = "pymssql"
+# DB_DRIVER = "psycopg2"
+# DB_DRIVER = "sqllite3"
+# DB_DRIVER = "oracledb"
+# DB_DRIVER = "<DRIVER>"
 
-# Uncomment the appropriate line to load the DB-API 2.0 (PEP 249) enabled driver
-from mysql.connector import connect
-#from pymysql import connect
-#from pymssql import connect
-#from psycopg2 import connect
-#from sqllite3 import connect
-#from oracledb import connect
-#from <DRIVER> import connect
+# Database connection settings
+DB_NAME = "raddb"
+DB_USER = "raduser"
+DB_PASS = "radpass"
+DB_HOST = "mydb"
 
-# DB connection and table names
-db_connection = connect(user='raduser', password='radpass', host='mydb', database='raddb')
-db_tables = RadTables()
+# Database table names
+RADCHECK = "radcheck"
+RADREPLY = "radreply"
+RADGROUPCHECK = "radgroupcheck"
+RADGROUPREPLY = "radgroupreply"
+RADUSERGROUP = "radusergroup"
+NAS = "nas"
 ```
 
-* Optionally, if you use different tables names in your FreeRADIUS database:
+* You can also customize the number of results per page:
 
 ```py
-db_tables = RadTables(
-    radcheck='my-radcheck',
-    radreply='my-radreply',
-    radgroupcheck='my-radgroupcheck',
-    radgroupreply='my-radgroupreply',
-    radusergroup='my-radusergroup',
-    nas='my-nas'
-)
+# Number of results per page for pagination
+PER_PAGE = 100
+```
+
+* Finally, you may want to configure the API URL (especially in production):
+
+```py
+# API_URL will be used to set the "Location" header field
+# after a resource has been created (POST) as per RFC 7231
+# and the "Link" header field (pagination) as per RFC 8288
+API_URL = "http://localhost:8000"
 ```
 
 * That's it! Now run the API and play with it live! All thanks to [FastAPI](https://github.com/tiangolo/fastapi) generating the OpenAPI specs and embedding [Swagger UI](https://github.com/swagger-api/swagger-ui) 😊
 
 ```bash
-cd src
-uvicorn api:app
+$ cd src
+$ uvicorn api:app
 INFO:     Started server process [12884]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
@@ -354,52 +365,53 @@ I did provide a [`sample.py`](https://github.com/angely-dev/freeradius-api/blob/
 > **Note:** the term *repository* refers to the Repository pattern. See the [#conceptual-approach](#conceptual-approach).
 
 ```py
-from database import db_connection, db_tables
+from database import db_connect
 from pyfreeradius.models import User, Group, Nas, AttributeOpValue, UserGroup
 from pyfreeradius.repositories import UserRepository, GroupRepository, NasRepository
 
 # Load the FreeRADIUS repositories
-user_repo = UserRepository(db_connection, db_tables)
-group_repo = GroupRepository(db_connection, db_tables)
-nas_repo = NasRepository(db_connection, db_tables)
+db_connection = db_connect()
+user_repo = UserRepository(db_connection)
+group_repo = GroupRepository(db_connection)
+nas_repo = NasRepository(db_connection)
 
 # Add some NASes
-n1 = Nas(nasname='1.1.1.1', shortname='my-super-nas', secret='my-super-secret')
-n2 = Nas(nasname='2.2.2.2', shortname='my-other-nas', secret='my-other-secret')
-if not nas_repo.exists(n1.nasname) and \
-   not nas_repo.exists(n2.nasname):
+n1 = Nas(nasname="1.1.1.1", shortname="my-super-nas", secret="my-super-secret")
+n2 = Nas(nasname="2.2.2.2", shortname="my-other-nas", secret="my-other-secret")
+if not nas_repo.exists(n1.nasname) and not nas_repo.exists(n2.nasname):
     nas_repo.add(n1)
     nas_repo.add(n2)
 
 # Add some groups
-g1 = Group(groupname='my-super-group', replies=[AttributeOpValue(attribute='Filter-Id', op=':=', value='100m')])
-g2 = Group(groupname='my-other-group', replies=[AttributeOpValue(attribute='Filter-Id', op=':=', value='200m')])
-if not group_repo.exists(g1.groupname) and \
-   not group_repo.exists(g2.groupname):
+g1 = Group(groupname="my-super-group", replies=[AttributeOpValue(attribute="Filter-Id", op=":=", value="100m")])
+g2 = Group(groupname="my-other-group", replies=[AttributeOpValue(attribute="Filter-Id", op=":=", value="200m")])
+if not group_repo.exists(g1.groupname) and not group_repo.exists(g2.groupname):
     group_repo.add(g1)
     group_repo.add(g2)
 
 # Add some users
 u1 = User(
-    username='my-super-user',
+    username="my-super-user",
     groups=[UserGroup(groupname=g1.groupname)],
-    checks=[AttributeOpValue(attribute='Cleartext-Password', op=':=', value='my-super-pass')],
-    replies=[AttributeOpValue(attribute='Framed-IP-Address', op=':=', value='10.0.0.1'),
-             AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.1.0/24'),
-             AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.2.0/24'),
-             AttributeOpValue(attribute='Huawei-Vpn-Instance', op=':=', value='my-super-vrf')]
+    checks=[AttributeOpValue(attribute="Cleartext-Password", op=":=", value="my-super-pass")],
+    replies=[
+        AttributeOpValue(attribute="Framed-IP-Address", op=":=", value="10.0.0.1"),
+        AttributeOpValue(attribute="Framed-Route", op="+=", value="192.168.1.0/24"),
+        AttributeOpValue(attribute="Framed-Route", op="+=", value="192.168.2.0/24"),
+        AttributeOpValue(attribute="Huawei-Vpn-Instance", op=":=", value="my-super-vrf"),
+    ],
 )
 u2 = User(
-    username='my-other-user',
-    checks=[AttributeOpValue(attribute='Cleartext-Password', op=':=', value='my-other-pass')],
-    replies=[AttributeOpValue(attribute='Framed-IP-Address', op=':=', value='10.0.0.2'),
-             AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.1.0/24'),
-             AttributeOpValue(attribute='Framed-Route', op='+=', value='192.168.2.0/24'),
-             AttributeOpValue(attribute='Huawei-Vpn-Instance', op=':=', value='my-other-vrf')]
+    username="my-other-user",
+    checks=[AttributeOpValue(attribute="Cleartext-Password", op=":=", value="my-other-pass")],
+    replies=[
+        AttributeOpValue(attribute="Framed-IP-Address", op=":=", value="10.0.0.2"),
+        AttributeOpValue(attribute="Framed-Route", op="+=", value="192.168.1.0/24"),
+        AttributeOpValue(attribute="Framed-Route", op="+=", value="192.168.2.0/24"),
+        AttributeOpValue(attribute="Huawei-Vpn-Instance", op=":=", value="my-other-vrf"),
+    ],
 )
-if not user_repo.exists(u1.username) and \
-   not user_repo.exists(u2.username) and \
-   group_repo.exists(g1.groupname):
+if not user_repo.exists(u1.username) and not user_repo.exists(u2.username) and group_repo.exists(g1.groupname):
     user_repo.add(u1)
     user_repo.add(u2)
 
@@ -407,8 +419,8 @@ if not user_repo.exists(u1.username) and \
 print(nas_repo.find_all_nasnames())
 print(user_repo.find_all_usernames())
 print(group_repo.find_all_groupnames())
-print(group_repo.has_users(g1.groupname)) # will print True
-print(group_repo.has_users(g2.groupname)) # will print False
+print(group_repo.has_users(g1.groupname))  # will print True
+print(group_repo.has_users(g2.groupname))  # will print False
 
 # Remove what we added
 nas_repo.remove(n1.nasname)
@@ -416,8 +428,7 @@ nas_repo.remove(n2.nasname)
 user_repo.remove(u1.username)
 user_repo.remove(u2.username)
 
-if not group_repo.has_users(g1.groupname) and \
-   not group_repo.has_users(g2.groupname):
+if not group_repo.has_users(g1.groupname) and not group_repo.has_users(g2.groupname):
     group_repo.remove(g1.groupname)
     group_repo.remove(g2.groupname)
 ```
@@ -440,56 +451,58 @@ False
 If desired, feel free to run the unit tests to ensure your install is fully working:
 
 ```bash
-/tmp/freeradius-api$ pip install -r requirements-dev.txt
-/tmp/freeradius-api$ cd src/
+/tmp/freeradius-api-master$ pip install -r requirements-dev.txt
 ```
 
 ```bash
-/tmp/freeradius-api/src$ pytest -v --cov-report term --cov=. tests/
-======================================================== test session starts =========================================================
-platform linux -- Python 3.10.12, pytest-8.3.2, pluggy-1.5.0 -- /tmp/freeradius-api/venv/bin/python3
+/tmp/freeradius-api-master$ pytest -v --cov-report term --cov=. src/tests/
+========================================= test session starts ==========================================
+platform linux -- Python 3.10.12, pytest-8.3.3, pluggy-1.5.0 -- /tmp/freeradius-api-master/venv/bin/python3
 cachedir: .pytest_cache
-rootdir: /tmp/freeradius-api
+rootdir: /tmp/freeradius-api-master
 configfile: pyproject.toml
-plugins: anyio-4.4.0, cov-5.0.0
-collected 14 items                                                                                                                   
+plugins: cov-5.0.0, anyio-4.6.2.post1
+collected 14 items                                                                                     
 
-tests/test_api.py::test_read_root PASSED                                                                                       [  7%]
-tests/test_api.py::test_nas PASSED                                                                                             [ 14%]
-tests/test_api.py::test_group PASSED                                                                                           [ 21%]
-tests/test_api.py::test_user PASSED                                                                                            [ 28%]
-tests/test_api.py::test_delete_user_group PASSED                                                                               [ 35%]
-tests/test_pyfreeradius.py::test_invalid_user PASSED                                                                           [ 42%]
-tests/test_pyfreeradius.py::test_invalid_group PASSED                                                                          [ 50%]
-tests/test_pyfreeradius.py::test_invalid_usergroup PASSED                                                                      [ 57%]
-tests/test_pyfreeradius.py::test_invalid_nas PASSED                                                                            [ 64%]
-tests/test_pyfreeradius.py::test_valid_user PASSED                                                                             [ 71%]
-tests/test_pyfreeradius.py::test_valid_group PASSED                                                                            [ 78%]
-tests/test_pyfreeradius.py::test_valid_nas PASSED                                                                              [ 85%]
-tests/test_pyfreeradius.py::test_usergroup PASSED                                                                              [ 92%]
-tests/test_pyfreeradius.py::test_groupuser PASSED                                                                              [100%]
+src/tests/test_api.py::test_read_root PASSED                                                     [  7%]
+src/tests/test_api.py::test_nas PASSED                                                           [ 14%]
+src/tests/test_api.py::test_group PASSED                                                         [ 21%]
+src/tests/test_api.py::test_user PASSED                                                          [ 28%]
+src/tests/test_api.py::test_delete_user_group PASSED                                             [ 35%]
+src/tests/test_pyfreeradius.py::test_invalid_user PASSED                                         [ 42%]
+src/tests/test_pyfreeradius.py::test_invalid_group PASSED                                        [ 50%]
+src/tests/test_pyfreeradius.py::test_invalid_usergroup PASSED                                    [ 57%]
+src/tests/test_pyfreeradius.py::test_invalid_nas PASSED                                          [ 64%]
+src/tests/test_pyfreeradius.py::test_valid_user PASSED                                           [ 71%]
+src/tests/test_pyfreeradius.py::test_valid_group PASSED                                          [ 78%]
+src/tests/test_pyfreeradius.py::test_valid_nas PASSED                                            [ 85%]
+src/tests/test_pyfreeradius.py::test_usergroup PASSED                                            [ 92%]
+src/tests/test_pyfreeradius.py::test_groupuser PASSED                                            [100%]
 
 ---------- coverage: platform linux, python 3.10.12-final-0 ----------
-Name                         Stmts   Miss  Cover
-------------------------------------------------
-api.py                         103      0   100%
-database.py                      5      0   100%
-pyfreeradius.py                247      0   100%
-sample.py                       33     33     0%
-tests/__init__.py                0      0   100%
-tests/test_api.py               85      0   100%
-tests/test_pyfreeradius.py      86      0   100%
-------------------------------------------------
-TOTAL                          559     33    94%
+Name                               Stmts   Miss  Cover
+------------------------------------------------------
+src/api.py                            98      0   100%
+src/database.py                        5      0   100%
+src/dependencies.py                   17      0   100%
+src/pyfreeradius/__init__.py           0      0   100%
+src/pyfreeradius/models.py            45      0   100%
+src/pyfreeradius/repositories.py     190      0   100%
+src/settings.py                       13      0   100%
+src/tests/__init__.py                  0      0   100%
+src/tests/test_api.py                 85      0   100%
+src/tests/test_pyfreeradius.py        87      0   100%
+------------------------------------------------------
+TOTAL                                540      0   100%
 
 
-========================================================= 14 passed in 1.19s =========================================================
+========================================== 14 passed in 1.11s ==========================================
 ```
 
 To generate an HTML report for checking not covered lines:
 
 ```bash
-/tmp/freeradius-api/src$ pytest --cov-report html --cov=. tests/
+/tmp/freeradius-api-master$ pytest --cov-report html --cov=. src/tests/
 ```
 
 # Keyset pagination
