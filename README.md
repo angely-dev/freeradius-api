@@ -533,7 +533,7 @@ print(user_repo.find_usernames(from_username='k')) # fetches usernames starting 
 user_repo.exists('aaa')                 # good
 ```
 
-The number of items per page is currently [hardcoded to 20](https://github.com/angely-dev/freeradius-api/blob/460de53/src/pyfreeradius.py#L90-L91) since there wasn't a need (yet) to parametrize it.
+The number of items per page is settable in the [`src/settings.py`](https://github.com/angely-dev/freeradius-api/blob/master/src/settings.py) file (it defaults to `100`).
 
 ## Using the API
 
@@ -601,10 +601,10 @@ Because in our case the lookup occurs in different tables, the query must be ada
 ```sql
 -- Keyset pagination for fetching usernames
 SELECT username FROM (
-        SELECT DISTINCT username FROM {self.radcheck}
-  UNION SELECT DISTINCT username FROM {self.radreply}
-  UNION SELECT DISTINCT username FROM {self.radusergroup}
-) u WHERE username > %s ORDER BY username LIMIT {self._PER_PAGE}
+        SELECT DISTINCT username FROM {RADCHECK}
+  UNION SELECT DISTINCT username FROM {RADREPLY}
+  UNION SELECT DISTINCT username FROM {RADUSERGROUP}
+) u WHERE username > %s ORDER BY username LIMIT {PER_PAGE}
 ```
 
 The issue [#1](https://github.com/angely-dev/freeradius-api/issues/1) provides more explanation about query performance and DBMSs support.
