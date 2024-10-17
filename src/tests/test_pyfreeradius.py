@@ -1,7 +1,7 @@
 from database import db_connection, db_tables
 from pydantic import ValidationError
-from pyfreeradius import User, Group, Nas, AttributeOpValue, UserGroup, GroupUser
-from pyfreeradius import UserRepository, GroupRepository, NasRepository
+from pyfreeradius.models import User, Group, Nas, AttributeOpValue, UserGroup, GroupUser
+from pyfreeradius.repositories import UserRepository, GroupRepository, NasRepository
 from pytest import raises
 
 # Load the FreeRADIUS repositories

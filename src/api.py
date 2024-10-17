@@ -1,8 +1,8 @@
 from database import db_connection, db_tables
 from fastapi import FastAPI, APIRouter, Response, HTTPException
 from pydantic import BaseModel
-from pyfreeradius import User, Group, Nas
-from pyfreeradius import UserRepository, GroupRepository, NasRepository
+from pyfreeradius.models import User, Group, Nas
+from pyfreeradius.repositories import UserRepository, GroupRepository, NasRepository
 
 #
 # We want our REST API endpoints to be KISS!

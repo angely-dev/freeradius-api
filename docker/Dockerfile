@@ -5,7 +5,7 @@ WORKDIR /whatever
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 # Then the source code
-COPY src/pyfreeradius.py .
+COPY src/pyfreeradius/ ./pyfreeradius/
 COPY src/database.py .
 COPY src/api.py .
 # For initial data

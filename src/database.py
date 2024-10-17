@@ -1,4 +1,4 @@
-from pyfreeradius import RadTables
+from pyfreeradius.repositories import RadTables
 
 # Uncomment the appropriate line to load the DB-API 2.0 (PEP 249) enabled driver
 from mysql.connector import connect
