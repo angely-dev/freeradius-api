@@ -14,8 +14,18 @@ from typing import Annotated
 
 def get_db_session():
     db_session = db_connect()
-    yield db_session
-    db_session.close()
+    try:
+        yield db_session
+    except:
+        # on any error, we rollback the DB
+        db_session.rollback()
+        raise
+    else:
+        # otherwise, we commit the DB
+        db_session.commit()
+    finally:
+        # in any case, we close the DB session
+        db_session.close()
 
 
 # Repositories depend on the DB session

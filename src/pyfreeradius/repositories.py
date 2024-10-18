@@ -25,7 +25,6 @@ class BaseRepository(ABC):
         try:
             yield db_cursor
         finally:
-            self.db_connection.commit()
             db_cursor.close()
 
 
