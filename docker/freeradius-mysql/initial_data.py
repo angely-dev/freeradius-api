@@ -78,3 +78,6 @@ if (
     user_repo.add(u2)
     user_repo.add(u3)
     user_repo.add(u4)
+
+db_connection.commit()
+db_connection.close()
