@@ -206,7 +206,6 @@ def patch_group(
 
     new_checks = group.checks if group_update.checks is None else group_update.checks
     new_replies = group.replies if group_update.replies is None else group_update.replies
-    new_users = group.users if group_update.users is None else group_update.users
     if not (new_checks or new_replies):
         raise HTTPException(422, "Resulting group would have no attributes")
 
