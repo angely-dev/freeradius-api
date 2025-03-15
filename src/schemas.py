@@ -10,6 +10,16 @@ class UserUpdate(BaseModel):
 
     @model_validator(mode="after")
     def check_fields_on_init(self):
+        # As per RFC 7396 (JSON Merge Patch), "null" value (i.e., "None" in Python) means removal.
+        # We consider "null" to be the same as "[]" (empty list), it will ease further processing.
+        provided_fields = self.model_dump(exclude_unset=True)
+        if "checks" in provided_fields and self.checks is None:
+            self.checks = []
+        if "replies" in provided_fields and self.replies is None:
+            self.replies = []
+        if "groups" in provided_fields and self.groups is None:
+            self.groups = []
+
         if self.checks == [] and self.replies == [] and self.groups == []:
             raise ValueError("Resulting user would have no attributes and no groups")
 
@@ -35,6 +45,16 @@ class GroupUpdate(BaseModel):
 
     @model_validator(mode="after")
     def check_fields_on_init(self):
+        # As per RFC 7396 (JSON Merge Patch), "null" value (i.e., "None" in Python) means removal.
+        # We consider "null" to be the same as "[]" (empty list), it will ease further processing.
+        provided_fields = self.model_dump(exclude_unset=True)
+        if "checks" in provided_fields and self.checks is None:
+            self.checks = []
+        if "replies" in provided_fields and self.replies is None:
+            self.replies = []
+        if "users" in provided_fields and self.users is None:
+            self.users = []
+
         if self.checks == [] and self.replies == []:
             raise ValueError("Resulting group would have no attributes")
 

@@ -37,11 +37,11 @@ patch_user_only_checks = {
 patch_user_only_replies = {
     "replies": [{"attribute": "Framed-IP-Address", "op": ":=", "value": "10.0.0.1"}],
     "checks": [],
-    "groups": [],
+    "groups": None,  # same as empty list
 }
 patch_user_only_groups = {
-    "replies": [],
-    "checks": [],
+    "replies": None,  # same as empty list
+    "checks": None,  # same as empty list
     "groups": [{"groupname": "g"}],
 }
 patch_user_bad_group = {"groups": [{"groupname": "non-existing-group"}]}
@@ -196,6 +196,7 @@ def test_group():
     response = client.patch("/groups/g", json={"checks": [], "replies": []})
     assert response.status_code == 422  # resulting group would have no attributes
 
+    patch_group_only_checks["replies"] = []
     response = client.patch("/groups/g", json=patch_group_only_checks)
     assert response.status_code == 200
     assert response.json() == get_group_patched_only_checks
@@ -203,12 +204,28 @@ def test_group():
     response = client.patch("/groups/g", json={"checks": []})
     assert response.status_code == 422  # resulting group would have no attributes
 
+    patch_group_only_replies["checks"] = []
     response = client.patch("/groups/g", json=patch_group_only_replies)
     assert response.status_code == 200
     assert response.json() == get_group_patched_only_replies
 
     response = client.patch("/groups/g", json={"replies": []})
     assert response.status_code == 422  # resulting group would have no attributes
+
+    patch_group_only_checks["replies"] = None  # same as empty list
+    response = client.patch("/groups/g", json=patch_group_only_checks)
+    assert response.status_code == 200
+    assert response.json() == get_group_patched_only_checks
+
+    patch_group_only_replies["checks"] = None  # same as empty list
+    response = client.patch("/groups/g", json=patch_group_only_replies)
+    assert response.status_code == 200
+    assert response.json() == get_group_patched_only_replies
+
+    patch_group_only_replies["users"] = None  # same as empty list
+    response = client.patch("/groups/g", json=patch_group_only_replies)
+    assert response.status_code == 200
+    assert response.json() == get_group_patched_only_replies
 
 
 def test_user():
