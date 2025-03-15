@@ -2,13 +2,8 @@ from dependencies import UserRepositoryDep, GroupRepositoryDep, NasRepositoryDep
 from fastapi import FastAPI, APIRouter, Response, HTTPException
 from pydantic import BaseModel
 from pyfreeradius.models import User, Group, Nas
+from schemas import UserUpdate, GroupUpdate, NasUpdate
 from settings import API_URL
-
-#
-# We want our REST API endpoints to be KISS!
-# Only GET/POST/DELETE methods are implemented; no PUT/PATCH methods.
-# To modify an existing object, first remove it and then recreate it.
-#
 
 
 # Error model and responses
@@ -142,6 +137,84 @@ def delete_group(groupname: str, group_repo: GroupRepositoryDep, ignore_users: b
         raise HTTPException(422, "Given group has users: remove them first or set 'ignore_users' flag to True")
 
     group_repo.remove(groupname)
+
+
+@router.patch("/nas/{nasname}", tags=["nas"], status_code=200, response_model=Nas, responses={404: error_404})
+def patch_nas(
+    nasname: str,
+    nas_update: NasUpdate,
+    nas_repo: NasRepositoryDep,
+    response: Response,
+):
+    nas = nas_repo.find_one(nasname)
+    if not nas:
+        raise HTTPException(404, "Given NAS does not exist")
+
+    nas_repo.set(nasname, new_shortname=nas_update.shortname, new_secret=nas_update.secret)
+    response.headers["Location"] = f"{API_URL}/nas/{nasname}"
+    return nas_repo.find_one(nasname)
+
+
+@router.patch("/users/{username}", tags=["users"], status_code=200, response_model=User, responses={404: error_404})
+def patch_user(
+    username: str,
+    user_update: UserUpdate,
+    user_repo: UserRepositoryDep,
+    group_repo: GroupRepositoryDep,
+    response: Response,
+):
+    user = user_repo.find_one(username)
+    if not user:
+        raise HTTPException(404, "Given user does not exist")
+
+    if user_update.groups:
+        for group in user_update.groups:
+            if not group_repo.exists(group.groupname):
+                raise HTTPException(422, f"Given group '{group.groupname}' does not exist: create it first")
+
+    new_checks = user.checks if user_update.checks is None else user_update.checks
+    new_replies = user.replies if user_update.replies is None else user_update.replies
+    new_groups = user.groups if user_update.groups is None else user_update.groups
+    if not (new_checks or new_replies or new_groups):
+        raise HTTPException(422, "Resulting user would have no attributes and no groups")
+
+    user_repo.set(
+        username, new_checks=user_update.checks, new_replies=user_update.replies, new_groups=user_update.groups
+    )
+    response.headers["Location"] = f"{API_URL}/users/{username}"
+    return user_repo.find_one(username)
+
+
+@router.patch(
+    "/groups/{groupname}", tags=["groups"], status_code=200, response_model=Group, responses={404: error_404}
+)
+def patch_group(
+    groupname: str,
+    group_update: GroupUpdate,
+    group_repo: GroupRepositoryDep,
+    user_repo: UserRepositoryDep,
+    response: Response,
+):
+    group = group_repo.find_one(groupname)
+    if not group:
+        raise HTTPException(404, "Given group does not exist")
+
+    if group_update.users:
+        for user in group_update.users:
+            if not user_repo.exists(user.username):
+                raise HTTPException(422, f"Given user '{user.username}' does not exist: create it first")
+
+    new_checks = group.checks if group_update.checks is None else group_update.checks
+    new_replies = group.replies if group_update.replies is None else group_update.replies
+    new_users = group.users if group_update.users is None else group_update.users
+    if not (new_checks or new_replies):
+        raise HTTPException(422, "Resulting group would have no attributes")
+
+    group_repo.set(
+        groupname, new_checks=group_update.checks, new_replies=group_update.replies, new_users=group_update.users
+    )
+    response.headers["Location"] = f"{API_URL}/groups/{groupname}"
+    return group_repo.find_one(groupname)
 
 
 # API is now ready!

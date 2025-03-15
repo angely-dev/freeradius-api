@@ -114,6 +114,32 @@ class UserRepository(BaseRepository):
                 sql = f"INSERT INTO {RADUSERGROUP} (username, groupname, priority) VALUES (%s, %s, %s)"
                 db_cursor.execute(sql, (user.username, group.groupname, group.priority))
 
+    def set(
+        self,
+        username: str,
+        new_checks: list[AttributeOpValue] | None = None,
+        new_replies: list[AttributeOpValue] | None = None,
+        new_groups: list[UserGroup] | None = None,
+    ):
+        with self._db_cursor() as db_cursor:
+            if new_checks is not None:
+                db_cursor.execute(f"DELETE FROM {RADCHECK} WHERE username = %s", (username,))
+                for check in new_checks:
+                    sql = f"INSERT INTO {RADCHECK} (username, attribute, op, value) VALUES (%s, %s, %s, %s)"
+                    db_cursor.execute(sql, (username, check.attribute, check.op, check.value))
+
+            if new_replies is not None:
+                db_cursor.execute(f"DELETE FROM {RADREPLY} WHERE username = %s", (username,))
+                for reply in new_replies:
+                    sql = f"INSERT INTO {RADREPLY} (username, attribute, op, value) VALUES (%s, %s, %s, %s)"
+                    db_cursor.execute(sql, (username, reply.attribute, reply.op, reply.value))
+
+            if new_groups is not None:
+                db_cursor.execute(f"DELETE FROM {RADUSERGROUP} WHERE username = %s", (username,))
+                for group in new_groups:
+                    sql = f"INSERT INTO {RADUSERGROUP} (username, groupname, priority) VALUES (%s, %s, %s)"
+                    db_cursor.execute(sql, (username, group.groupname, group.priority))
+
     def remove(self, username: str):
         with self._db_cursor() as db_cursor:
             db_cursor.execute(f"DELETE FROM {RADCHECK} WHERE username = %s", (username,))
@@ -214,6 +240,32 @@ class GroupRepository(BaseRepository):
                 sql = f"INSERT INTO {RADUSERGROUP} (groupname, username, priority) VALUES (%s, %s, %s)"
                 db_cursor.execute(sql, (group.groupname, user.username, user.priority))
 
+    def set(
+        self,
+        groupname: str,
+        new_checks: list[AttributeOpValue] | None = None,
+        new_replies: list[AttributeOpValue] | None = None,
+        new_users: list[GroupUser] | None = None,
+    ):
+        with self._db_cursor() as db_cursor:
+            if new_checks is not None:
+                db_cursor.execute(f"DELETE FROM {RADGROUPCHECK} WHERE groupname = %s", (groupname,))
+                for check in new_checks:
+                    sql = f"INSERT INTO {RADGROUPCHECK} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)"
+                    db_cursor.execute(sql, (groupname, check.attribute, check.op, check.value))
+
+            if new_replies is not None:
+                db_cursor.execute(f"DELETE FROM {RADGROUPREPLY} WHERE groupname = %s", (groupname,))
+                for reply in new_replies:
+                    sql = f"INSERT INTO {RADGROUPREPLY} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)"
+                    db_cursor.execute(sql, (groupname, reply.attribute, reply.op, reply.value))
+
+            if new_users is not None:
+                db_cursor.execute(f"DELETE FROM {RADUSERGROUP} WHERE groupname = %s", (groupname,))
+                for user in new_users:
+                    sql = f"INSERT INTO {RADUSERGROUP} (groupname, username, priority) VALUES (%s, %s, %s)"
+                    db_cursor.execute(sql, (groupname, user.username, user.priority))
+
     def remove(self, groupname: str):
         with self._db_cursor() as db_cursor:
             db_cursor.execute(f"DELETE FROM {RADGROUPCHECK} WHERE groupname = %s", (groupname,))
@@ -274,6 +326,16 @@ class NasRepository(BaseRepository):
         with self._db_cursor() as db_cursor:
             sql = f"INSERT INTO {NAS} (nasname, shortname, secret) VALUES (%s, %s, %s)"
             db_cursor.execute(sql, (nas.nasname, nas.shortname, nas.secret))
+
+    def set(self, nasname: str, new_shortname: str | None = None, new_secret: str | None = None):
+        with self._db_cursor() as db_cursor:
+            if new_shortname is not None:
+                sql = f"UPDATE {NAS} SET shortname = %s WHERE nasname = %s"
+                db_cursor.execute(sql, (new_shortname, nasname))
+
+            if new_secret is not None:
+                sql = f"UPDATE {NAS} SET secret = %s WHERE nasname = %s"
+                db_cursor.execute(sql, (new_secret, nasname))
 
     def remove(self, nasname: str):
         with self._db_cursor() as db_cursor:
