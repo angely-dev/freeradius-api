@@ -24,29 +24,29 @@ def read_root():
     return {"Welcome!": f"API docs is available at {API_URL}/docs"}
 
 
-@router.get("/nas", tags=["nas"], status_code=200, response_model=list[str])
+@router.get("/nas", tags=["nas"], status_code=200, response_model=list[Nas])
 def get_nases(nas_repo: NasRepositoryDep, response: Response, from_nasname: str | None = None):
-    nasnames = nas_repo.find_nasnames(from_nasname)
+    nasnames = nas_repo.find_all(from_nasname)
     if nasnames:
-        last_nasname = nasnames[-1]
+        last_nasname = nasnames[-1].nasname
         response.headers["Link"] = f'<{API_URL}/nas?from_nasname={last_nasname}>; rel="next"'
     return nasnames
 
 
-@router.get("/users", tags=["users"], status_code=200, response_model=list[str])
+@router.get("/users", tags=["users"], status_code=200, response_model=list[User])
 def get_users(user_repo: UserRepositoryDep, response: Response, from_username: str | None = None):
-    usernames = user_repo.find_usernames(from_username)
+    usernames = user_repo.find_all(from_username)
     if usernames:
-        last_username = usernames[-1]
+        last_username = usernames[-1].username
         response.headers["Link"] = f'<{API_URL}/users?from_username={last_username}>; rel="next"'
     return usernames
 
 
-@router.get("/groups", tags=["groups"], status_code=200, response_model=list[str])
+@router.get("/groups", tags=["groups"], status_code=200, response_model=list[Group])
 def get_groups(group_repo: GroupRepositoryDep, response: Response, from_groupname: str | None = None):
-    groupnames = group_repo.find_groupnames(from_groupname)
+    groupnames = group_repo.find_all(from_groupname)
     if groupnames:
-        last_groupname = groupnames[-1]
+        last_groupname = groupnames[-1].groupname
         response.headers["Link"] = f'<{API_URL}/groups?from_groupname={last_groupname}>; rel="next"'
     return groupnames
 

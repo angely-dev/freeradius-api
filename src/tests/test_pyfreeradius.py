@@ -79,6 +79,7 @@ def test_valid_user():
     assert u.username in user_repo.find_all_usernames()
     assert u.username in user_repo.find_usernames()
     assert u.username in user_repo.find_usernames(from_username="t")
+    assert u in user_repo.find_all()
 
     # Repository: modifying
     user_repo.set(u.username, new_replies=checks, new_checks=replies)
@@ -105,6 +106,7 @@ def test_valid_group():
     assert g.groupname in group_repo.find_all_groupnames()
     assert g.groupname in group_repo.find_groupnames()
     assert g.groupname in group_repo.find_groupnames(from_groupname="f")
+    assert g in group_repo.find_all()
 
     # Repository: modifying
     group_repo.set(g.groupname, new_replies=checks, new_checks=replies)
@@ -130,6 +132,7 @@ def test_valid_nas():
     assert n.nasname in nas_repo.find_all_nasnames()
     assert n.nasname in nas_repo.find_nasnames()
     assert n.nasname in nas_repo.find_nasnames(from_nasname="1.1.1.0")
+    assert n in nas_repo.find_all()
 
     # Repository: modifying
     nas_repo.set(n.nasname, new_shortname="new-sh", new_secret="new-se")

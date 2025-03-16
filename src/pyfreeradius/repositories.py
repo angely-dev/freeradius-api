@@ -31,6 +31,10 @@ class UserRepository:
             counts = [count for (count,) in db_cursor.fetchall()]
             return sum(counts) > 0
 
+    def find_all(self, from_username: str | None = None) -> list[User]:
+        usernames = self._find_first_usernames() if not from_username else self._find_next_usernames(from_username)
+        return [self.find_one(username) for username in usernames]  # type: ignore
+
     def find_all_usernames(self) -> list[str]:
         with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""SELECT DISTINCT username FROM {RADCHECK}
@@ -149,6 +153,10 @@ class GroupRepository:
             db_cursor.execute(sql, (groupname, groupname, groupname))
             counts = [count for (count,) in db_cursor.fetchall()]
             return sum(counts) > 0
+
+    def find_all(self, from_groupname: str | None = None) -> list[Group]:
+        groupnames = self._find_first_groupnames() if not from_groupname else self._find_next_groupnames(from_groupname)
+        return [self.find_one(groupname) for groupname in groupnames]  # type: ignore
 
     def find_all_groupnames(self) -> list[str]:
         with closing(self.db_connection.cursor()) as db_cursor:
@@ -273,6 +281,10 @@ class NasRepository:
             db_cursor.execute(sql, (nasname,))
             (count,) = db_cursor.fetchone()
             return count > 0
+
+    def find_all(self, from_nasname: str | None = None) -> list[Nas]:
+        nasnames = self._find_first_nasnames() if not from_nasname else self._find_next_nasnames(from_nasname)
+        return [self.find_one(nasname) for nasname in nasnames]  # type: ignore
 
     def find_all_nasnames(self) -> list[str]:
         with closing(self.db_connection.cursor()) as db_cursor:

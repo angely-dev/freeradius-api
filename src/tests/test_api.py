@@ -126,7 +126,7 @@ def test_nas():
 
     response = client.get("/nas")
     assert response.status_code == 200
-    assert "5.5.5.5" not in response.json()  # NAS not part of collection yet
+    assert get_nas not in response.json()  # NAS not part of collection yet
 
     response = client.post("/nas", json=post_nas)
     assert response.status_code == 201  # NAS created
@@ -141,7 +141,7 @@ def test_nas():
 
     response = client.get("/nas")
     assert response.status_code == 200
-    assert "5.5.5.5" in response.json()  # NAS now part of collection
+    assert get_nas in response.json()  # NAS now part of collection
 
     response = client.patch("/nas/non-existing-nas", json={})
     assert response.status_code == 404
@@ -163,7 +163,7 @@ def test_group():
 
     response = client.get("/groups")
     assert response.status_code == 200
-    assert "g" not in response.json()  # group not part of collection yet
+    assert get_group not in response.json()  # group not part of collection yet
 
     response = client.post("/groups", json=post_group_bad_user)
     assert response.status_code == 422  # user does not exist
@@ -181,7 +181,7 @@ def test_group():
 
     response = client.get("/groups")
     assert response.status_code == 200
-    assert "g" in response.json()  # group now part of collection
+    assert get_group in response.json()  # group now part of collection
 
     # patch operation
 
@@ -235,7 +235,7 @@ def test_user():
 
     response = client.get("/users")
     assert response.status_code == 200
-    assert "u" not in response.json()  # user not part of collection yet
+    assert get_user not in response.json()  # user not part of collection yet
 
     response = client.post("/users", json=post_user_bad_group)
     assert response.status_code == 422  # group does not exist
@@ -253,7 +253,7 @@ def test_user():
 
     response = client.get("/users")
     assert response.status_code == 200
-    assert "u" in response.json()  # user now part of collection
+    assert get_user in response.json()  # user now part of collection
 
     # patch operation
 
