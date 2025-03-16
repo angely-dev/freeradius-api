@@ -12,7 +12,7 @@
 * [Conceptual approach](#conceptual-approach)
   * [Domain-Driven Design](#domain-driven-design-ddd) (repository pattern)
   * [Class diagram](#class-diagram)
- 
+
 # What is this project?
 
 A lightweight REST API on top of the [FreeRADIUS](https://freeradius.org) database schema for automation and integration purposes.
@@ -226,7 +226,7 @@ curl -X 'DELETE' http://localhost:8000/groups/300m
 > **Reminder:**
 > * When a user is deleted, so are its attributes and its belonging to groups
 > * When a group is deleted, so are its attributes and its belonging to users ([if `ignore_users` is set](https://github.com/angely-dev/freeradius-api/blob/v1.4.0/src/api.py#L137-L139))
-> 
+>
 > See [#semantic](https://github.com/angely-dev/freeradius-api#semantic).
 
 # How To
@@ -462,7 +462,7 @@ cachedir: .pytest_cache
 rootdir: /tmp/freeradius-api-master
 configfile: pyproject.toml
 plugins: cov-5.0.0, anyio-4.6.2.post1
-collected 14 items                                                                                     
+collected 14 items
 
 src/tests/test_api.py::test_read_root PASSED                                                     [  7%]
 src/tests/test_api.py::test_nas PASSED                                                           [ 14%]
