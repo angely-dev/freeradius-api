@@ -49,9 +49,9 @@ if not user_repo.exists(u1.username) and not user_repo.exists(u2.username) and g
     user_repo.add(u2)
 
 # Some printing
-print(nas_repo.find_all_nasnames())
-print(user_repo.find_all_usernames())
-print(group_repo.find_all_groupnames())
+print(nas_repo.find_all())
+print(user_repo.find_all())
+print(group_repo.find_all())
 print(group_repo.has_users(g1.groupname))  # will print True
 print(group_repo.has_users(g2.groupname))  # will print False
 

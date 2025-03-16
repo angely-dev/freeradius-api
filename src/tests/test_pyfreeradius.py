@@ -76,10 +76,8 @@ def test_valid_user():
 
     # Repository: finding
     assert user_repo.find_one(u.username) == u
-    assert u.username in user_repo.find_all_usernames()
-    assert u.username in user_repo.find_usernames()
-    assert u.username in user_repo.find_usernames(from_username="t")
     assert u in user_repo.find_all()
+    assert u in user_repo.find_all(from_username="t")
 
     # Repository: modifying
     user_repo.set(u.username, new_replies=checks, new_checks=replies)
@@ -103,10 +101,8 @@ def test_valid_group():
 
     # Repository: finding
     assert group_repo.find_one(g.groupname) == g
-    assert g.groupname in group_repo.find_all_groupnames()
-    assert g.groupname in group_repo.find_groupnames()
-    assert g.groupname in group_repo.find_groupnames(from_groupname="f")
     assert g in group_repo.find_all()
+    assert g in group_repo.find_all(from_groupname="f")
 
     # Repository: modifying
     group_repo.set(g.groupname, new_replies=checks, new_checks=replies)
@@ -129,10 +125,8 @@ def test_valid_nas():
 
     # Repository: finding
     assert nas_repo.find_one(n.nasname) == n
-    assert n.nasname in nas_repo.find_all_nasnames()
-    assert n.nasname in nas_repo.find_nasnames()
-    assert n.nasname in nas_repo.find_nasnames(from_nasname="1.1.1.0")
     assert n in nas_repo.find_all()
+    assert n in nas_repo.find_all(from_nasname="1.1.1.0")
 
     # Repository: modifying
     nas_repo.set(n.nasname, new_shortname="new-sh", new_secret="new-se")
