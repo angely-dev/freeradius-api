@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from contextlib import closing
 
 from settings import (
     NAS,
@@ -31,7 +32,7 @@ class UserRepository(BaseRepository):
         super().__init__(db_connection)
 
     def exists(self, username: str) -> bool:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""SELECT COUNT(DISTINCT username) FROM {RADCHECK} WHERE username = %s
                 UNION SELECT COUNT(DISTINCT username) FROM {RADREPLY} WHERE username = %s
                 UNION SELECT COUNT(DISTINCT username) FROM {RADUSERGROUP} WHERE username = %s"""
@@ -40,7 +41,7 @@ class UserRepository(BaseRepository):
             return sum(counts) > 0
 
     def find_all_usernames(self) -> list[str]:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""SELECT DISTINCT username FROM {RADCHECK}
                 UNION SELECT DISTINCT username FROM {RADREPLY}
                 UNION SELECT DISTINCT username FROM {RADUSERGROUP}"""
@@ -54,7 +55,7 @@ class UserRepository(BaseRepository):
         return self._find_next_usernames(from_username)
 
     def _find_first_usernames(self) -> list[str]:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""
                 SELECT username FROM (
                         SELECT DISTINCT username FROM {RADCHECK}
@@ -67,7 +68,7 @@ class UserRepository(BaseRepository):
             return usernames
 
     def _find_next_usernames(self, from_username: str) -> list[str]:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""
                 SELECT username FROM (
                         SELECT DISTINCT username FROM {RADCHECK}
@@ -83,7 +84,7 @@ class UserRepository(BaseRepository):
         if not self.exists(username):
             return None
 
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"SELECT attribute, op, value FROM {RADCHECK} WHERE username = %s"
             db_cursor.execute(sql, (username,))
             checks = [AttributeOpValue(attribute=a, op=o, value=v) for a, o, v in db_cursor.fetchall()]
@@ -99,7 +100,7 @@ class UserRepository(BaseRepository):
             return User(username=username, checks=checks, replies=replies, groups=groups)
 
     def add(self, user: User):
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             for check in user.checks:
                 sql = f"INSERT INTO {RADCHECK} (username, attribute, op, value) VALUES (%s, %s, %s, %s)"
                 db_cursor.execute(sql, (user.username, check.attribute, check.op, check.value))
@@ -119,7 +120,7 @@ class UserRepository(BaseRepository):
         new_replies: list[AttributeOpValue] | None = None,
         new_groups: list[UserGroup] | None = None,
     ):
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             if new_checks is not None:
                 db_cursor.execute(f"DELETE FROM {RADCHECK} WHERE username = %s", (username,))
                 for check in new_checks:
@@ -139,7 +140,7 @@ class UserRepository(BaseRepository):
                     db_cursor.execute(sql, (username, group.groupname, group.priority))
 
     def remove(self, username: str):
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             db_cursor.execute(f"DELETE FROM {RADCHECK} WHERE username = %s", (username,))
             db_cursor.execute(f"DELETE FROM {RADREPLY} WHERE username = %s", (username,))
             db_cursor.execute(f"DELETE FROM {RADUSERGROUP} WHERE username = %s", (username,))
@@ -150,7 +151,7 @@ class GroupRepository(BaseRepository):
         super().__init__(db_connection)
 
     def exists(self, groupname: str) -> bool:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""SELECT COUNT(DISTINCT groupname) FROM {RADGROUPCHECK} WHERE groupname = %s
                 UNION SELECT COUNT(DISTINCT groupname) FROM {RADGROUPREPLY} WHERE groupname = %s
                 UNION SELECT COUNT(DISTINCT groupname) FROM {RADUSERGROUP} WHERE groupname = %s"""
@@ -159,7 +160,7 @@ class GroupRepository(BaseRepository):
             return sum(counts) > 0
 
     def find_all_groupnames(self) -> list[str]:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""SELECT DISTINCT groupname FROM {RADGROUPCHECK}
                 UNION SELECT DISTINCT groupname FROM {RADGROUPREPLY}
                 UNION SELECT DISTINCT groupname FROM {RADUSERGROUP}"""
@@ -173,7 +174,7 @@ class GroupRepository(BaseRepository):
         return self._find_next_groupnames(from_groupname)
 
     def _find_first_groupnames(self) -> list[str]:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""
                 SELECT groupname FROM (
                         SELECT DISTINCT groupname FROM {RADGROUPCHECK}
@@ -186,7 +187,7 @@ class GroupRepository(BaseRepository):
             return groupnames
 
     def _find_next_groupnames(self, from_groupname: str) -> list[str]:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""
                 SELECT groupname FROM (
                         SELECT DISTINCT groupname FROM {RADGROUPCHECK}
@@ -199,7 +200,7 @@ class GroupRepository(BaseRepository):
             return groupnames
 
     def has_users(self, groupname: str) -> bool:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"SELECT COUNT(DISTINCT username) FROM {RADUSERGROUP} WHERE groupname = %s"
             db_cursor.execute(sql, (groupname,))
             (count,) = db_cursor.fetchone()
@@ -209,7 +210,7 @@ class GroupRepository(BaseRepository):
         if not self.exists(groupname):
             return None
 
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"SELECT attribute, op, value FROM {RADGROUPCHECK} WHERE groupname = %s"
             db_cursor.execute(sql, (groupname,))
             checks = [AttributeOpValue(attribute=a, op=o, value=v) for a, o, v in db_cursor.fetchall()]
@@ -225,7 +226,7 @@ class GroupRepository(BaseRepository):
             return Group(groupname=groupname, checks=checks, replies=replies, users=users)
 
     def add(self, group: Group):
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             for check in group.checks:
                 sql = f"INSERT INTO {RADGROUPCHECK} (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)"
                 db_cursor.execute(sql, (group.groupname, check.attribute, check.op, check.value))
@@ -245,7 +246,7 @@ class GroupRepository(BaseRepository):
         new_replies: list[AttributeOpValue] | None = None,
         new_users: list[GroupUser] | None = None,
     ):
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             if new_checks is not None:
                 db_cursor.execute(f"DELETE FROM {RADGROUPCHECK} WHERE groupname = %s", (groupname,))
                 for check in new_checks:
@@ -265,7 +266,7 @@ class GroupRepository(BaseRepository):
                     db_cursor.execute(sql, (groupname, user.username, user.priority))
 
     def remove(self, groupname: str):
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             db_cursor.execute(f"DELETE FROM {RADGROUPCHECK} WHERE groupname = %s", (groupname,))
             db_cursor.execute(f"DELETE FROM {RADGROUPREPLY} WHERE groupname = %s", (groupname,))
             db_cursor.execute(f"DELETE FROM {RADUSERGROUP} WHERE groupname = %s", (groupname,))
@@ -276,14 +277,14 @@ class NasRepository(BaseRepository):
         super().__init__(db_connection)
 
     def exists(self, nasname: str) -> bool:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"SELECT COUNT(DISTINCT nasname) FROM {NAS} WHERE nasname = %s"
             db_cursor.execute(sql, (nasname,))
             (count,) = db_cursor.fetchone()
             return count > 0
 
     def find_all_nasnames(self) -> list[str]:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"SELECT DISTINCT nasname FROM {NAS}"
             db_cursor.execute(sql)
             nasnames = [nasname for (nasname,) in db_cursor.fetchall()]
@@ -295,7 +296,7 @@ class NasRepository(BaseRepository):
         return self._find_next_nasnames(from_nasname)
 
     def _find_first_nasnames(self) -> list[str]:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""SELECT DISTINCT nasname FROM {NAS}
                       ORDER BY nasname LIMIT {PER_PAGE}"""
             db_cursor.execute(sql)
@@ -303,7 +304,7 @@ class NasRepository(BaseRepository):
             return nasnames
 
     def _find_next_nasnames(self, from_nasname: str) -> list[str]:
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"""SELECT DISTINCT nasname FROM {NAS}
                       WHERE nasname > %s ORDER BY nasname LIMIT {PER_PAGE}"""
             db_cursor.execute(sql, (from_nasname,))
@@ -314,19 +315,19 @@ class NasRepository(BaseRepository):
         if not self.exists(nasname):
             return None
 
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"SELECT nasname, shortname, secret FROM {NAS} WHERE nasname = %s"
             db_cursor.execute(sql, (nasname,))
             n, sh, se = db_cursor.fetchone()
             return Nas(nasname=n, shortname=sh, secret=se)
 
     def add(self, nas: Nas):
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             sql = f"INSERT INTO {NAS} (nasname, shortname, secret) VALUES (%s, %s, %s)"
             db_cursor.execute(sql, (nas.nasname, nas.shortname, nas.secret))
 
     def set(self, nasname: str, new_shortname: str | None = None, new_secret: str | None = None):
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             if new_shortname is not None:
                 sql = f"UPDATE {NAS} SET shortname = %s WHERE nasname = %s"
                 db_cursor.execute(sql, (new_shortname, nasname))
@@ -336,5 +337,5 @@ class NasRepository(BaseRepository):
                 db_cursor.execute(sql, (new_secret, nasname))
 
     def remove(self, nasname: str):
-        with self.db_connection.cursor() as db_cursor:
+        with closing(self.db_connection.cursor()) as db_cursor:
             db_cursor.execute(f"DELETE FROM {NAS} WHERE nasname = %s", (nasname,))
