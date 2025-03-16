@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from contextlib import closing
 
 from settings import (
@@ -16,20 +15,12 @@ from .models import AttributeOpValue, Group, GroupUser, Nas, User, UserGroup
 #
 # As per the Repository pattern, repositories implement the mapping
 # between the Domain Objects (the Pydantic models) and the database.
-# The BaseRepository is the abstract superclass of the repositories.
 #
 
 
-class BaseRepository(ABC):
-    # The constructor sets the DB context (connection and table names)
-    @abstractmethod
+class UserRepository:
     def __init__(self, db_connection):
         self.db_connection = db_connection
-
-
-class UserRepository(BaseRepository):
-    def __init__(self, db_connection):
-        super().__init__(db_connection)
 
     def exists(self, username: str) -> bool:
         with closing(self.db_connection.cursor()) as db_cursor:
@@ -146,9 +137,9 @@ class UserRepository(BaseRepository):
             db_cursor.execute(f"DELETE FROM {RADUSERGROUP} WHERE username = %s", (username,))
 
 
-class GroupRepository(BaseRepository):
+class GroupRepository:
     def __init__(self, db_connection):
-        super().__init__(db_connection)
+        self.db_connection = db_connection
 
     def exists(self, groupname: str) -> bool:
         with closing(self.db_connection.cursor()) as db_cursor:
@@ -272,9 +263,9 @@ class GroupRepository(BaseRepository):
             db_cursor.execute(f"DELETE FROM {RADUSERGROUP} WHERE groupname = %s", (groupname,))
 
 
-class NasRepository(BaseRepository):
+class NasRepository:
     def __init__(self, db_connection):
-        super().__init__(db_connection)
+        self.db_connection = db_connection
 
     def exists(self, nasname: str) -> bool:
         with closing(self.db_connection.cursor()) as db_cursor:
