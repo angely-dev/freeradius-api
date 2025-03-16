@@ -36,9 +36,12 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -r requirements.txt
         python -m pip install -r requirements-dev.txt
-    - name: Check code formatting
+    - name: Check Ruff linting
       run: |
-        black --check .
+        ruff check --extend-select I
+    - name: Check Ruff formatting
+      run: |
+        ruff format --check --line-length=120
     - name: Check static typing
       run: |
         mypy .
