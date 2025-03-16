@@ -1,5 +1,6 @@
-from pydantic import BaseModel, StringConstraints, Field, model_validator
 from typing import Annotated
+
+from pydantic import BaseModel, Field, StringConstraints, model_validator
 
 #
 # The Pydantic models implement the UML class diagram;
@@ -50,9 +51,7 @@ class User(BaseModel):
             "examples": [
                 {
                     "username": "my-user",
-                    "checks": [
-                        AttributeOpValue(attribute="Cleartext-Password", op=":=", value="my-pass").model_dump()
-                    ],
+                    "checks": [AttributeOpValue(attribute="Cleartext-Password", op=":=", value="my-pass").model_dump()],
                     "replies": [
                         AttributeOpValue(attribute="Framed-IP-Address", op=":=", value="10.0.0.1").model_dump(),
                         AttributeOpValue(attribute="Framed-Route", op="+=", value="192.168.1.0/24").model_dump(),

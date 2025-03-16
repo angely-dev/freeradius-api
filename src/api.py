@@ -1,8 +1,9 @@
-from dependencies import UserRepositoryDep, GroupRepositoryDep, NasRepositoryDep
-from fastapi import FastAPI, APIRouter, Response, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException, Response
 from pydantic import BaseModel
-from pyfreeradius.models import User, Group, Nas
-from schemas import UserUpdate, GroupUpdate, NasUpdate
+
+from dependencies import GroupRepositoryDep, NasRepositoryDep, UserRepositoryDep
+from pyfreeradius.models import Group, Nas, User
+from schemas import GroupUpdate, NasUpdate, UserUpdate
 from settings import API_URL
 
 
@@ -185,9 +186,7 @@ def patch_user(
     return user_repo.find_one(username)
 
 
-@router.patch(
-    "/groups/{groupname}", tags=["groups"], status_code=200, response_model=Group, responses={404: error_404}
-)
+@router.patch("/groups/{groupname}", tags=["groups"], status_code=200, response_model=Group, responses={404: error_404})
 def patch_group(
     groupname: str,
     group_update: GroupUpdate,

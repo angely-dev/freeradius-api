@@ -1,8 +1,17 @@
-from .models import User, Group, Nas, AttributeOpValue, UserGroup, GroupUser
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from settings import PER_PAGE
-from settings import RADCHECK, RADREPLY, RADGROUPCHECK, RADGROUPREPLY, RADUSERGROUP, NAS
+
+from settings import (
+    NAS,
+    PER_PAGE,
+    RADCHECK,
+    RADGROUPCHECK,
+    RADGROUPREPLY,
+    RADREPLY,
+    RADUSERGROUP,
+)
+
+from .models import AttributeOpValue, Group, GroupUser, Nas, User, UserGroup
 
 #
 # As per the Repository pattern, repositories implement the mapping
@@ -38,7 +47,7 @@ class UserRepository(BaseRepository):
                 UNION SELECT COUNT(DISTINCT username) FROM {RADREPLY} WHERE username = %s
                 UNION SELECT COUNT(DISTINCT username) FROM {RADUSERGROUP} WHERE username = %s"""
             db_cursor.execute(sql, (username, username, username))
-            counts = [count for count, in db_cursor.fetchall()]
+            counts = [count for (count,) in db_cursor.fetchall()]
             return sum(counts) > 0
 
     def find_all_usernames(self) -> list[str]:
@@ -47,7 +56,7 @@ class UserRepository(BaseRepository):
                 UNION SELECT DISTINCT username FROM {RADREPLY}
                 UNION SELECT DISTINCT username FROM {RADUSERGROUP}"""
             db_cursor.execute(sql)
-            usernames = [username for username, in db_cursor.fetchall()]
+            usernames = [username for (username,) in db_cursor.fetchall()]
             return usernames
 
     def find_usernames(self, from_username: str | None = None) -> list[str]:
@@ -65,7 +74,7 @@ class UserRepository(BaseRepository):
                 ) u ORDER BY username LIMIT {PER_PAGE}
             """
             db_cursor.execute(sql)
-            usernames = [username for username, in db_cursor.fetchall()]
+            usernames = [username for (username,) in db_cursor.fetchall()]
             return usernames
 
     def _find_next_usernames(self, from_username: str) -> list[str]:
@@ -78,7 +87,7 @@ class UserRepository(BaseRepository):
                 ) u WHERE username > %s ORDER BY username LIMIT {PER_PAGE}
             """
             db_cursor.execute(sql, (from_username,))
-            usernames = [username for username, in db_cursor.fetchall()]
+            usernames = [username for (username,) in db_cursor.fetchall()]
             return usernames
 
     def find_one(self, username: str) -> User | None:
@@ -157,7 +166,7 @@ class GroupRepository(BaseRepository):
                 UNION SELECT COUNT(DISTINCT groupname) FROM {RADGROUPREPLY} WHERE groupname = %s
                 UNION SELECT COUNT(DISTINCT groupname) FROM {RADUSERGROUP} WHERE groupname = %s"""
             db_cursor.execute(sql, (groupname, groupname, groupname))
-            counts = [count for count, in db_cursor.fetchall()]
+            counts = [count for (count,) in db_cursor.fetchall()]
             return sum(counts) > 0
 
     def find_all_groupnames(self) -> list[str]:
@@ -166,7 +175,7 @@ class GroupRepository(BaseRepository):
                 UNION SELECT DISTINCT groupname FROM {RADGROUPREPLY}
                 UNION SELECT DISTINCT groupname FROM {RADUSERGROUP}"""
             db_cursor.execute(sql)
-            groupnames = [groupname for groupname, in db_cursor.fetchall()]
+            groupnames = [groupname for (groupname,) in db_cursor.fetchall()]
             return groupnames
 
     def find_groupnames(self, from_groupname: str | None = None) -> list[str]:
@@ -184,7 +193,7 @@ class GroupRepository(BaseRepository):
                 ) g ORDER BY groupname LIMIT {PER_PAGE}
             """
             db_cursor.execute(sql)
-            groupnames = [groupname for groupname, in db_cursor.fetchall()]
+            groupnames = [groupname for (groupname,) in db_cursor.fetchall()]
             return groupnames
 
     def _find_next_groupnames(self, from_groupname: str) -> list[str]:
@@ -197,7 +206,7 @@ class GroupRepository(BaseRepository):
                 ) g WHERE groupname > %s ORDER BY groupname LIMIT {PER_PAGE}
             """
             db_cursor.execute(sql, (from_groupname,))
-            groupnames = [groupname for groupname, in db_cursor.fetchall()]
+            groupnames = [groupname for (groupname,) in db_cursor.fetchall()]
             return groupnames
 
     def has_users(self, groupname: str) -> bool:
@@ -288,7 +297,7 @@ class NasRepository(BaseRepository):
         with self._db_cursor() as db_cursor:
             sql = f"SELECT DISTINCT nasname FROM {NAS}"
             db_cursor.execute(sql)
-            nasnames = [nasname for nasname, in db_cursor.fetchall()]
+            nasnames = [nasname for (nasname,) in db_cursor.fetchall()]
             return nasnames
 
     def find_nasnames(self, from_nasname: str | None = None) -> list[str]:
@@ -301,7 +310,7 @@ class NasRepository(BaseRepository):
             sql = f"""SELECT DISTINCT nasname FROM {NAS}
                       ORDER BY nasname LIMIT {PER_PAGE}"""
             db_cursor.execute(sql)
-            nasnames = [nasname for nasname, in db_cursor.fetchall()]
+            nasnames = [nasname for (nasname,) in db_cursor.fetchall()]
             return nasnames
 
     def _find_next_nasnames(self, from_nasname: str) -> list[str]:
@@ -309,7 +318,7 @@ class NasRepository(BaseRepository):
             sql = f"""SELECT DISTINCT nasname FROM {NAS}
                       WHERE nasname > %s ORDER BY nasname LIMIT {PER_PAGE}"""
             db_cursor.execute(sql, (from_nasname,))
-            nasnames = [nasname for nasname, in db_cursor.fetchall()]
+            nasnames = [nasname for (nasname,) in db_cursor.fetchall()]
             return nasnames
 
     def find_one(self, nasname: str) -> Nas | None:

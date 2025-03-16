@@ -1,6 +1,6 @@
 from database import db_connect
-from pyfreeradius.models import User, Group, Nas, AttributeOpValue, UserGroup
-from pyfreeradius.repositories import UserRepository, GroupRepository, NasRepository
+from pyfreeradius.models import AttributeOpValue, Group, Nas, User, UserGroup
+from pyfreeradius.repositories import GroupRepository, NasRepository, UserRepository
 
 # Load the FreeRADIUS repositories
 db_connection = db_connect()

@@ -1,6 +1,8 @@
-from pydantic import BaseModel, StringConstraints
-from pyfreeradius.models import AttributeOpValue, UserGroup, GroupUser, model_validator
 from typing import Annotated
+
+from pydantic import BaseModel, StringConstraints
+
+from pyfreeradius.models import AttributeOpValue, GroupUser, UserGroup, model_validator
 
 
 class UserUpdate(BaseModel):

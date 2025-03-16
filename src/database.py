@@ -1,5 +1,6 @@
 from importlib import import_module
-from settings import DB_DRIVER, DB_NAME, DB_USER, DB_PASS, DB_HOST
+
+from settings import DB_DRIVER, DB_HOST, DB_NAME, DB_PASS, DB_USER
 
 # Dynamically import the DB driver
 db_driver = import_module(DB_DRIVER)

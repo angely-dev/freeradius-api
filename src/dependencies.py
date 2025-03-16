@@ -1,7 +1,9 @@
-from database import db_connect
-from fastapi import Depends
-from pyfreeradius.repositories import UserRepository, GroupRepository, NasRepository
 from typing import Annotated
+
+from fastapi import Depends
+
+from database import db_connect
+from pyfreeradius.repositories import GroupRepository, NasRepository, UserRepository
 
 #
 # Here we use FastAPI Dependency Injection system.
