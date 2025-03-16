@@ -69,47 +69,46 @@ def test_invalid_nas():
 def test_valid_user():
     u = User(username="u", checks=checks, replies=replies)
 
-    # Repository: adding
+    # adding
     assert not user_repo.exists(u.username)
     user_repo.add(u)
     assert user_repo.exists(u.username)
 
-    # Repository: finding
+    # finding
     assert user_repo.find_one(u.username) == u
     assert u in user_repo.find_all()
     assert u in user_repo.find_all(from_username="t")
 
-    # Repository: modifying
+    # modifying
     user_repo.set(u.username, new_replies=checks, new_checks=replies)
     assert user_repo.find_one(u.username).replies == checks
     assert user_repo.find_one(u.username).checks == replies
 
-    # Repository: removing
+    # removing
     user_repo.remove(u.username)
     assert not user_repo.exists(u.username)
     assert user_repo.find_one(u.username) is None
 
 
 def test_valid_group():
-    # Model: valid instance
     g = Group(groupname="g", checks=checks, replies=replies)
 
-    # Repository: adding
+    # adding
     assert not group_repo.exists(g.groupname)
     group_repo.add(g)
     assert group_repo.exists(g.groupname)
 
-    # Repository: finding
+    # finding
     assert group_repo.find_one(g.groupname) == g
     assert g in group_repo.find_all()
     assert g in group_repo.find_all(from_groupname="f")
 
-    # Repository: modifying
+    # modifying
     group_repo.set(g.groupname, new_replies=checks, new_checks=replies)
     assert group_repo.find_one(g.groupname).replies == checks
     assert group_repo.find_one(g.groupname).checks == replies
 
-    # Repository: removing
+    # removing
     group_repo.remove(g.groupname)
     assert not group_repo.exists(g.groupname)
     assert group_repo.find_one(g.groupname) is None
@@ -118,22 +117,22 @@ def test_valid_group():
 def test_valid_nas():
     n = Nas(nasname="1.1.1.1", shortname="sh", secret="se")
 
-    # Repository: adding
+    # adding
     assert not nas_repo.exists(n.nasname)
     nas_repo.add(n)
     assert nas_repo.exists(n.nasname)
 
-    # Repository: finding
+    # finding
     assert nas_repo.find_one(n.nasname) == n
     assert n in nas_repo.find_all()
     assert n in nas_repo.find_all(from_nasname="1.1.1.0")
 
-    # Repository: modifying
+    # modifying
     nas_repo.set(n.nasname, new_shortname="new-sh", new_secret="new-se")
     assert nas_repo.find_one(n.nasname).shortname == "new-sh"
     assert nas_repo.find_one(n.nasname).secret == "new-se"
 
-    # Repository: removing
+    # removing
     nas_repo.remove(n.nasname)
     assert not nas_repo.exists(n.nasname)
     assert nas_repo.find_one(n.nasname) is None
@@ -143,18 +142,18 @@ def test_usergroup():
     g = Group(groupname="g", checks=checks)
     u = User(username="u", checks=checks, groups=[UserGroup(groupname=g.groupname)])
 
-    # Repository: adding
+    # adding
     group_repo.add(g)
     user_repo.add(u)
     assert group_repo.has_users(g.groupname)  # group has users
 
-    # Repository: modifying
+    # modifying
     user_repo.set(u.username, new_groups=[])
     assert user_repo.find_one(u.username).groups == []
     user_repo.set(u.username, new_groups=[UserGroup(groupname=g.groupname)])
     assert user_repo.find_one(u.username).groups == u.groups
 
-    # Repository: removing
+    # removing
     user_repo.remove(u.username)
     assert not group_repo.has_users(g.groupname)  # group has no users
     group_repo.remove(g.groupname)
@@ -164,18 +163,18 @@ def test_groupuser():
     u = User(username="u", checks=checks)
     g = Group(groupname="g", checks=checks, users=[GroupUser(username=u.username)])
 
-    # Repository: adding
+    # adding
     user_repo.add(u)
     group_repo.add(g)
     assert group_repo.has_users(g.groupname)  # group has users
 
-    # Repository: modifying
+    # modifying
     group_repo.set(g.groupname, new_users=[])
     assert group_repo.find_one(g.groupname).users == []
     group_repo.set(g.groupname, new_users=[GroupUser(username=u.username)])
     assert group_repo.find_one(g.groupname).users == g.users
 
-    # Repository: removing
+    # removing
     user_repo.remove(u.username)
     assert not group_repo.has_users(g.groupname)  # group has no users
     group_repo.remove(g.groupname)
