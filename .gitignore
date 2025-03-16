@@ -1,4 +1,8 @@
 *.swp
 .coverage
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
 __pycache__/
+htmlcov/
 venv/
