@@ -1,6 +1,12 @@
 [![python](https://img.shields.io/badge/python-3.10+-success.svg)](https://devguide.python.org/versions)
 [![license](https://img.shields.io/badge/license-MIT-success.svg)](https://opensource.org/licenses/MIT)
 
+---
+
+_Doc is about to be updated!_
+
+---
+
 * [What is this project?](#what-is-this-project)
 * [What it is NOT?](#what-it-is-not)
 * [Quick demo](#quick-demo)
