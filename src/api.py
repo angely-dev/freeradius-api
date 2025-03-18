@@ -1,4 +1,6 @@
-from fastapi import APIRouter, FastAPI, HTTPException, Response
+from typing import Annotated
+
+from fastapi import APIRouter, FastAPI, HTTPException, Query, Response
 from pydantic import BaseModel
 
 from dependencies import GroupRepositoryDep, NasRepositoryDep, UserRepositoryDep
@@ -130,12 +132,35 @@ def delete_user(username: str, user_repo: UserRepositoryDep):
 
 
 @router.delete("/groups/{groupname}", tags=["groups"], status_code=204, responses={404: error_404})
-def delete_group(groupname: str, group_repo: GroupRepositoryDep, ignore_users: bool = False):
-    if not group_repo.exists(groupname):
+def delete_group(
+    groupname: str,
+    group_repo: GroupRepositoryDep,
+    user_repo: UserRepositoryDep,
+    ignore_users: Annotated[
+        bool, Query(description="If set to true, the group will be deleted even if it still has users")
+    ] = False,
+    prevent_users_deletion: Annotated[
+        bool, Query(description="If set to false, group users without any attributes will be deleted")
+    ] = True,
+):
+    group = group_repo.find_one(groupname)
+    if not group:
         raise HTTPException(404, "Given group does not exist")
 
-    if group_repo.has_users(groupname) and not ignore_users:
-        raise HTTPException(422, "Given group has users: remove them first or set 'ignore_users' flag to True")
+    if group.users and not ignore_users:
+        raise HTTPException(422, "Given group has users: delete them first or set 'ignore_users' parameter to true")
+
+    if prevent_users_deletion:
+        for groupuser in group.users:
+            user = user_repo.find_one(groupuser.username)
+            if user and not (user.checks or user.replies):
+                raise HTTPException(
+                    422,
+                    (
+                        f"User '{user.username}' would be deleted as it has no attributes: "
+                        "delete it first or set 'prevent_users_deletion' parameter to false"
+                    ),
+                )
 
     group_repo.remove(groupname)
 
@@ -193,10 +218,25 @@ def patch_group(
     group_repo: GroupRepositoryDep,
     user_repo: UserRepositoryDep,
     response: Response,
+    prevent_users_deletion: Annotated[
+        bool, Query(description="If set to false, group users without any attributes will be deleted")
+    ] = True,
 ):
     group = group_repo.find_one(groupname)
     if not group:
         raise HTTPException(404, "Given group does not exist")
+
+    if (group_update.users or group_update.users == []) and prevent_users_deletion:
+        for groupuser in group.users:
+            user = user_repo.find_one(groupuser.username)
+            if user and not (user.checks or user.replies):
+                raise HTTPException(
+                    422,
+                    (
+                        f"User '{user.username}' would be deleted as it has no attributes: "
+                        "delete it first or set 'prevent_users_deletion' parameter to false"
+                    ),
+                )
 
     if group_update.users:
         for user in group_update.users:

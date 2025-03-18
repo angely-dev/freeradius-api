@@ -30,6 +30,8 @@ post_user_bad_group = post_user | {"groups": [{"groupname": "non-existing-group"
 
 post_user_with_group = post_user | {"groups": [{"groupname": "g", "priority": 1}]}
 
+post_user_only_group = {"username": "u", "groups": [{"groupname": "g"}]}
+
 patch_user_only_checks = {
     "replies": [],
     "checks": [{"attribute": "Auth-Type", "op": ":=", "value": "Accept"}],
@@ -306,3 +308,25 @@ def test_delete_user_group():
 
     response = client.delete("/groups/g")
     assert response.status_code == 404  # group now not found
+
+
+def test_prevent_users_deletion():
+    response = client.post("/groups", json=post_group)
+    assert response.status_code == 201  # group created
+    assert response.json() == get_group
+
+    response = client.post("/users", json=post_user_only_group)
+    assert response.status_code == 201  # user created
+    assert response.json() == get_user_patched_only_groups
+
+    response = client.patch("/groups/g", params={"prevent_users_deletion": True}, json={"users": []})
+    assert response.status_code == 422  # user would be deleted as it has no attributes
+
+    response = client.delete("/groups/g", params={"ignore_users": True, "prevent_users_deletion": True})
+    assert response.status_code == 422  # user would be deleted as it has no attributes
+
+    response = client.delete("/groups/g", params={"ignore_users": True, "prevent_users_deletion": False})
+    assert response.status_code == 204
+
+    response = client.get("/users/u")
+    assert response.status_code == 404  # user has been deleted on group deletion as it had no attributes
