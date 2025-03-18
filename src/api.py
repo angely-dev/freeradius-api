@@ -92,9 +92,9 @@ def post_user(user: User, user_repo: UserRepositoryDep, group_repo: GroupReposit
     if user_repo.exists(user.username):
         raise HTTPException(409, "Given user already exists")
 
-    for group in user.groups:
-        if not group_repo.exists(group.groupname):
-            raise HTTPException(422, f"Given group '{group.groupname}' does not exist: create it first")
+    for usergroup in user.groups:
+        if not group_repo.exists(usergroup.groupname):
+            raise HTTPException(422, f"Given group '{usergroup.groupname}' does not exist: create it first")
 
     user_repo.add(user)
     response.headers["Location"] = f"{API_URL}/users/{user.username}"
@@ -106,9 +106,9 @@ def post_group(group: Group, group_repo: GroupRepositoryDep, user_repo: UserRepo
     if group_repo.exists(group.groupname):
         raise HTTPException(409, "Given group already exists")
 
-    for user in group.users:
-        if not user_repo.exists(user.username):
-            raise HTTPException(422, f"Given user '{user.username}' does not exist: create it first")
+    for groupuser in group.users:
+        if not user_repo.exists(groupuser.username):
+            raise HTTPException(422, f"Given user '{groupuser.username}' does not exist: create it first")
 
     group_repo.add(group)
     response.headers["Location"] = f"{API_URL}/groups/{group.groupname}"
@@ -194,9 +194,9 @@ def patch_user(
         raise HTTPException(404, "Given user does not exist")
 
     if user_update.groups:
-        for group in user_update.groups:
-            if not group_repo.exists(group.groupname):
-                raise HTTPException(422, f"Given group '{group.groupname}' does not exist: create it first")
+        for usergroup in user_update.groups:
+            if not group_repo.exists(usergroup.groupname):
+                raise HTTPException(422, f"Given group '{usergroup.groupname}' does not exist: create it first")
 
     new_checks = user.checks if user_update.checks is None else user_update.checks
     new_replies = user.replies if user_update.replies is None else user_update.replies
@@ -239,9 +239,9 @@ def patch_group(
                 )
 
     if group_update.users:
-        for user in group_update.users:
-            if not user_repo.exists(user.username):
-                raise HTTPException(422, f"Given user '{user.username}' does not exist: create it first")
+        for groupuser in group_update.users:
+            if not user_repo.exists(groupuser.username):
+                raise HTTPException(422, f"Given user '{groupuser.username}' does not exist: create it first")
 
     new_checks = group.checks if group_update.checks is None else group_update.checks
     new_replies = group.replies if group_update.replies is None else group_update.replies
