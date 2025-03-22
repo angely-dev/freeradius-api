@@ -103,7 +103,13 @@ def post_user(
     if not allow_groups_creation:
         for usergroup in user.groups:
             if not group_repo.exists(usergroup.groupname):
-                raise HTTPException(422, f"Given group '{usergroup.groupname}' does not exist: create it first")
+                raise HTTPException(
+                    422,
+                    (
+                        f"Given group '{usergroup.groupname}' does not exist: "
+                        "create it first or set 'allow_groups_creation' parameter to true"
+                    ),
+                )
 
     user_repo.add(user)
     response.headers["Location"] = f"{API_URL}/users/{user.username}"
@@ -126,7 +132,13 @@ def post_group(
     if not allow_users_creation:
         for groupuser in group.users:
             if not user_repo.exists(groupuser.username):
-                raise HTTPException(422, f"Given user '{groupuser.username}' does not exist: create it first")
+                raise HTTPException(
+                    422,
+                    (
+                        f"Given user '{groupuser.username}' does not exist: "
+                        "create it first or set 'allow_users_creation' parameter to true"
+                    ),
+                )
 
     group_repo.add(group)
     response.headers["Location"] = f"{API_URL}/groups/{group.groupname}"
