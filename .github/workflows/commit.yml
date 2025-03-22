@@ -38,10 +38,10 @@ jobs:
         python -m pip install -r requirements-dev.txt
     - name: Check Ruff linting
       run: |
-        ruff check --extend-select I
+        ruff check
     - name: Check Ruff formatting
       run: |
-        ruff format --check --line-length=120
+        ruff format --check
     - name: Check static typing
       run: |
         mypy .
