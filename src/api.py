@@ -88,13 +88,22 @@ def post_nas(nas: Nas, nas_repo: NasRepositoryDep, response: Response):
 
 
 @router.post("/users", tags=["users"], status_code=201, response_model=User, responses={409: error_409})
-def post_user(user: User, user_repo: UserRepositoryDep, group_repo: GroupRepositoryDep, response: Response):
+def post_user(
+    user: User,
+    user_repo: UserRepositoryDep,
+    group_repo: GroupRepositoryDep,
+    response: Response,
+    allow_groups_creation: Annotated[
+        bool, Query(description="If set to true, nonexistent groups will be created during user creation")
+    ] = False,
+):
     if user_repo.exists(user.username):
         raise HTTPException(409, "Given user already exists")
 
-    for usergroup in user.groups:
-        if not group_repo.exists(usergroup.groupname):
-            raise HTTPException(422, f"Given group '{usergroup.groupname}' does not exist: create it first")
+    if not allow_groups_creation:
+        for usergroup in user.groups:
+            if not group_repo.exists(usergroup.groupname):
+                raise HTTPException(422, f"Given group '{usergroup.groupname}' does not exist: create it first")
 
     user_repo.add(user)
     response.headers["Location"] = f"{API_URL}/users/{user.username}"
@@ -102,13 +111,22 @@ def post_user(user: User, user_repo: UserRepositoryDep, group_repo: GroupReposit
 
 
 @router.post("/groups", tags=["groups"], status_code=201, response_model=Group, responses={409: error_409})
-def post_group(group: Group, group_repo: GroupRepositoryDep, user_repo: UserRepositoryDep, response: Response):
+def post_group(
+    group: Group,
+    group_repo: GroupRepositoryDep,
+    user_repo: UserRepositoryDep,
+    response: Response,
+    allow_users_creation: Annotated[
+        bool, Query(description="If set to true, nonexistent users will be created during group creation")
+    ] = False,
+):
     if group_repo.exists(group.groupname):
         raise HTTPException(409, "Given group already exists")
 
-    for groupuser in group.users:
-        if not user_repo.exists(groupuser.username):
-            raise HTTPException(422, f"Given user '{groupuser.username}' does not exist: create it first")
+    if not allow_users_creation:
+        for groupuser in group.users:
+            if not user_repo.exists(groupuser.username):
+                raise HTTPException(422, f"Given user '{groupuser.username}' does not exist: create it first")
 
     group_repo.add(group)
     response.headers["Location"] = f"{API_URL}/groups/{group.groupname}"
