@@ -5,10 +5,11 @@ WORKDIR /whatever
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 # Then the source code
-COPY src/pyfreeradius/ ./pyfreeradius/
-COPY src/settings.py .
-COPY src/database.py .
-COPY src/dependencies.py .
-COPY src/api.py .
+COPY freeradius-api/pyfreeradius/ ./pyfreeradius/
+COPY freeradius-api/settings.py .
+COPY freeradius-api/database.py .
+COPY freeradius-api/dependencies.py .
+COPY freeradius-api/schemas.py .
+COPY freeradius-api/api.py .
 # For initial data
 COPY docker/freeradius-mysql/initial_data.py .
