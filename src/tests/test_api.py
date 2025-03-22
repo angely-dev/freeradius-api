@@ -10,8 +10,23 @@ post_group = {"groupname": "g", "replies": [{"attribute": "Filter-Id", "op": ":=
 
 post_group_bad_user = post_group | {"users": [{"username": "non-existing-user", "priority": 1}]}
 
-patch_group_only_checks = {"replies": [], "checks": [{"attribute": "Auth-Type", "op": ":=", "value": "Accept"}]}
-patch_group_only_replies = {"replies": [{"attribute": "Filter-Id", "op": ":=", "value": "20m"}], "checks": []}
+post_group_only_user = {"groupname": "g", "users": [{"username": "u"}]}
+
+patch_group_only_checks = {
+    "replies": [],
+    "checks": [{"attribute": "Auth-Type", "op": ":=", "value": "Accept"}],
+    "users": [],
+}
+patch_group_only_replies = {
+    "replies": [{"attribute": "Filter-Id", "op": ":=", "value": "20m"}],
+    "checks": [],
+    "users": None,  # same as empty list
+}
+patch_group_only_users = {
+    "replies": None,  # same as empty list
+    "checks": None,  # same as empty list
+    "users": [{"username": "u"}],
+}
 patch_group_bad_user = patch_group_only_checks | {"users": [{"username": "non-existing-user"}]}
 patch_group_dup_user = patch_group_only_checks | {"users": [{"username": "u"}, {"username": "u"}]}
 
@@ -75,6 +90,13 @@ get_group_patched_only_replies = {
     "checks": [],
     "replies": [{"attribute": "Filter-Id", "op": ":=", "value": "20m"}],
     "users": [],
+}
+
+get_group_patched_only_users = {
+    "groupname": "g",
+    "checks": [],
+    "replies": [],
+    "users": [{"username": "u", "priority": 1}],
 }
 
 get_user = {
@@ -196,39 +218,35 @@ def test_group():
     response = client.patch("/groups/g", json=patch_group_dup_user)
     assert response.status_code == 422  # given users have one or more duplicates
 
-    response = client.patch("/groups/g", json={"checks": [], "replies": []})
-    assert response.status_code == 422  # resulting group would have no attributes
+    response = client.patch("/groups/g", json={"checks": [], "replies": [], "users": []})
+    assert response.status_code == 422  # resulting group would have no attributes and no users
 
-    patch_group_only_checks["replies"] = []
+    response = client.post("/users", json=post_user)
+    assert response.status_code == 201  # user created, in order to add it in the group
+
+    response = client.patch("/groups/g", json=patch_group_only_users)
+    assert response.status_code == 200
+    assert response.json() == get_group_patched_only_users
+
+    response = client.patch("/groups/g", json={"users": []})
+    assert response.status_code == 422  # resulting group would have no attributes and no users
+
     response = client.patch("/groups/g", json=patch_group_only_checks)
     assert response.status_code == 200
     assert response.json() == get_group_patched_only_checks
 
     response = client.patch("/groups/g", json={"checks": []})
-    assert response.status_code == 422  # resulting group would have no attributes
+    assert response.status_code == 422  # resulting group would have no attributes and no users
 
-    patch_group_only_replies["checks"] = []
     response = client.patch("/groups/g", json=patch_group_only_replies)
     assert response.status_code == 200
     assert response.json() == get_group_patched_only_replies
 
     response = client.patch("/groups/g", json={"replies": []})
-    assert response.status_code == 422  # resulting group would have no attributes
+    assert response.status_code == 422  # resulting group would have no attributes and no users
 
-    patch_group_only_checks["replies"] = None  # same as empty list
-    response = client.patch("/groups/g", json=patch_group_only_checks)
-    assert response.status_code == 200
-    assert response.json() == get_group_patched_only_checks
-
-    patch_group_only_replies["checks"] = None  # same as empty list
-    response = client.patch("/groups/g", json=patch_group_only_replies)
-    assert response.status_code == 200
-    assert response.json() == get_group_patched_only_replies
-
-    patch_group_only_replies["users"] = None  # same as empty list
-    response = client.patch("/groups/g", json=patch_group_only_replies)
-    assert response.status_code == 200
-    assert response.json() == get_group_patched_only_replies
+    response = client.delete("/users/u")
+    assert response.status_code == 204  # user deleted
 
 
 def test_user():
@@ -330,3 +348,24 @@ def test_prevent_users_deletion():
 
     response = client.get("/users/u")
     assert response.status_code == 404  # user has been deleted on group deletion as it had no attributes
+
+
+def test_prevent_groups_deletion():
+    response = client.post("/users", json=post_user)
+    assert response.status_code == 201  # user created
+
+    response = client.post("/groups", json=post_group_only_user)
+    assert response.status_code == 201  # group created
+    assert response.json() == get_group_patched_only_users
+
+    response = client.patch("/users/u", params={"prevent_groups_deletion": True}, json={"groups": []})
+    assert response.status_code == 422  # group would be deleted as it has no attributes
+
+    response = client.delete("/users/u", params={"prevent_groups_deletion": True})
+    assert response.status_code == 422  # group would be deleted as it has no attributes
+
+    response = client.delete("/users/u", params={"prevent_groups_deletion": False})
+    assert response.status_code == 204
+
+    response = client.get("/groups/g")
+    assert response.status_code == 404  # group has been deleted on user deletion as it had no attributes

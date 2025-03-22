@@ -40,6 +40,7 @@ def test_invalid_group():
         Group()
     with raises(ValidationError):
         # Group must have at least one check or one reply attribute
+        #    or must have at least one user
         Group(groupname="g")
     with raises(ValidationError):
         # Given users have one or more duplicates

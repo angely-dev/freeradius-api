@@ -73,8 +73,10 @@ class Group(BaseModel):
 
     @model_validator(mode="after")
     def check_fields_on_init(self):
-        if not (self.checks or self.replies):
-            raise ValueError("Group must have at least one check or one reply attribute")
+        if not (self.checks or self.replies or self.users):
+            raise ValueError(
+                "Group must have at least one check or one reply attribute, or must have at least one user"
+            )
 
         usernames = [user.username for user in self.users]
         if not len(usernames) == len(set(usernames)):

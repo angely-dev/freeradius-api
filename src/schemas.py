@@ -57,8 +57,8 @@ class GroupUpdate(BaseModel):
         if "users" in provided_fields and self.users is None:
             self.users = []
 
-        if self.checks == [] and self.replies == []:
-            raise ValueError("Resulting group would have no attributes")
+        if self.checks == [] and self.replies == [] and self.users == []:
+            raise ValueError("Resulting group would have no attributes and no users")
 
         usernames = [user.username for user in self.users or []]
         if not len(usernames) == len(set(usernames)):

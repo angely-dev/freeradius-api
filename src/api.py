@@ -124,9 +124,29 @@ def delete_nas(nasname: str, nas_repo: NasRepositoryDep):
 
 
 @router.delete("/users/{username}", tags=["users"], status_code=204, responses={404: error_404})
-def delete_user(username: str, user_repo: UserRepositoryDep):
-    if not user_repo.exists(username):
+def delete_user(
+    username: str,
+    user_repo: UserRepositoryDep,
+    group_repo: GroupRepositoryDep,
+    prevent_groups_deletion: Annotated[
+        bool, Query(description="If set to false, user groups without any attributes will be deleted")
+    ] = True,
+):
+    user = user_repo.find_one(username)
+    if not user:
         raise HTTPException(404, detail="Given user does not exist")
+
+    if prevent_groups_deletion:
+        for usergroup in user.groups:
+            group = group_repo.find_one(usergroup.groupname)
+            if group and not (group.checks or group.replies):
+                raise HTTPException(
+                    422,
+                    (
+                        f"Group '{group.groupname}' would be deleted as it has no attributes: "
+                        "delete it first or set 'prevent_groups_deletion' parameter to false"
+                    ),
+                )
 
     user_repo.remove(username)
 
@@ -188,6 +208,9 @@ def patch_user(
     user_repo: UserRepositoryDep,
     group_repo: GroupRepositoryDep,
     response: Response,
+    prevent_groups_deletion: Annotated[
+        bool, Query(description="If set to false, user groups without any attributes will be deleted")
+    ] = True,
 ):
     user = user_repo.find_one(username)
     if not user:
@@ -197,6 +220,18 @@ def patch_user(
         for usergroup in user_update.groups:
             if not group_repo.exists(usergroup.groupname):
                 raise HTTPException(422, f"Given group '{usergroup.groupname}' does not exist: create it first")
+
+    if (user_update.groups or user_update.groups == []) and prevent_groups_deletion:
+        for usergroup in user.groups:
+            group = group_repo.find_one(usergroup.groupname)
+            if group and not (group.checks or group.replies):
+                raise HTTPException(
+                    422,
+                    (
+                        f"Group '{group.groupname}' would be deleted as it has no attributes: "
+                        "delete it first or set 'prevent_groups_deletion' parameter to false"
+                    ),
+                )
 
     new_checks = user.checks if user_update.checks is None else user_update.checks
     new_replies = user.replies if user_update.replies is None else user_update.replies
@@ -245,8 +280,9 @@ def patch_group(
 
     new_checks = group.checks if group_update.checks is None else group_update.checks
     new_replies = group.replies if group_update.replies is None else group_update.replies
-    if not (new_checks or new_replies):
-        raise HTTPException(422, "Resulting group would have no attributes")
+    new_users = group.users if group_update.users is None else group_update.users
+    if not (new_checks or new_replies or new_users):
+        raise HTTPException(422, "Resulting group would have no attributes and no users")
 
     group_repo.set(
         groupname, new_checks=group_update.checks, new_replies=group_update.replies, new_users=group_update.users
