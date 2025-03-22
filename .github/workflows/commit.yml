@@ -47,4 +47,4 @@ jobs:
         mypy .
     - name: Run tests
       run: |
-        pytest -v --cov-report term --cov=. src/tests/
+        pytest -v --cov-report term --cov=. tests/
