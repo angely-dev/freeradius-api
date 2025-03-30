@@ -2,6 +2,17 @@ from database import db_connect
 from pyfreeradius.models import AttributeOpValue, Group, Nas, User, UserGroup
 from pyfreeradius.repositories import GroupRepository, NasRepository, UserRepository
 
+#
+# This is just an example of how to use Repositories without the API.
+#
+# If you use the pyfreeradius package directly like this, be cautious
+# with the logic you implement over it (since none is implemented by the
+# repositories and very little by the Pydantic models). Without any guards,
+# this can lead to invalid states in the database (e.g., user added twice,
+# belonging to a non-existing group). As a starting point, you may want to
+# use the logic contained in this file (e.g., exists, has_users).
+#
+
 # Load the FreeRADIUS repositories
 db_connection = db_connect()
 user_repo = UserRepository(db_connection)
