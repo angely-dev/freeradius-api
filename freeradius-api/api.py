@@ -238,6 +238,9 @@ def patch_user(
     user_repo: UserRepositoryDep,
     group_repo: GroupRepositoryDep,
     response: Response,
+    allow_groups_creation: Annotated[
+        bool, Query(description="If set to true, nonexistent groups will be created during user modification")
+    ] = False,
     prevent_groups_deletion: Annotated[
         bool, Query(description="If set to false, user groups without any attributes will be deleted")
     ] = True,
@@ -247,9 +250,10 @@ def patch_user(
         raise HTTPException(404, "Given user does not exist")
 
     if user_update.groups:
-        for usergroup in user_update.groups:
-            if not group_repo.exists(usergroup.groupname):
-                raise HTTPException(422, f"Given group '{usergroup.groupname}' does not exist: create it first")
+        if not allow_groups_creation:
+            for usergroup in user_update.groups:
+                if not group_repo.exists(usergroup.groupname):
+                    raise HTTPException(422, f"Given group '{usergroup.groupname}' does not exist: create it first")
 
     if (user_update.groups or user_update.groups == []) and prevent_groups_deletion:
         for usergroup in user.groups:
@@ -283,6 +287,9 @@ def patch_group(
     group_repo: GroupRepositoryDep,
     user_repo: UserRepositoryDep,
     response: Response,
+    allow_users_creation: Annotated[
+        bool, Query(description="If set to true, nonexistent users will be created during group modification")
+    ] = False,
     prevent_users_deletion: Annotated[
         bool, Query(description="If set to false, group users without any attributes will be deleted")
     ] = True,
@@ -304,9 +311,10 @@ def patch_group(
                 )
 
     if group_update.users:
-        for groupuser in group_update.users:
-            if not user_repo.exists(groupuser.username):
-                raise HTTPException(422, f"Given user '{groupuser.username}' does not exist: create it first")
+        if not allow_users_creation:
+            for groupuser in group_update.users:
+                if not user_repo.exists(groupuser.username):
+                    raise HTTPException(422, f"Given user '{groupuser.username}' does not exist: create it first")
 
     new_checks = group.checks if group_update.checks is None else group_update.checks
     new_replies = group.replies if group_update.replies is None else group_update.replies
