@@ -298,6 +298,12 @@ def patch_group(
     if not group:
         raise HTTPException(404, "Given group does not exist")
 
+    if group_update.users:
+        if not allow_users_creation:
+            for groupuser in group_update.users:
+                if not user_repo.exists(groupuser.username):
+                    raise HTTPException(422, f"Given user '{groupuser.username}' does not exist: create it first")
+
     if (group_update.users or group_update.users == []) and prevent_users_deletion:
         for groupuser in group.users:
             user = user_repo.find_one(groupuser.username)
@@ -309,12 +315,6 @@ def patch_group(
                         "delete it first or set 'prevent_users_deletion' parameter to false"
                     ),
                 )
-
-    if group_update.users:
-        if not allow_users_creation:
-            for groupuser in group_update.users:
-                if not user_repo.exists(groupuser.username):
-                    raise HTTPException(422, f"Given user '{groupuser.username}' does not exist: create it first")
 
     new_checks = group.checks if group_update.checks is None else group_update.checks
     new_replies = group.replies if group_update.replies is None else group_update.replies
