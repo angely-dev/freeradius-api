@@ -75,3 +75,6 @@ user_repo.remove(u2.username)
 if not group_repo.has_users(g1.groupname) and not group_repo.has_users(g2.groupname):
     group_repo.remove(g1.groupname)
     group_repo.remove(g2.groupname)
+
+db_connection.commit()
+db_connection.close()
