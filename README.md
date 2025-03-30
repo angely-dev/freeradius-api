@@ -32,7 +32,7 @@ Based on [Pydantic](https://github.com/pydantic/pydantic) and [FastAPI](https://
 
 > **What database support?** It works with any DB-API 2.0 ([PEP 249](https://peps.python.org/pep-0249/)) enabled driver: `pymysql`, `pymssql`, `psycopg2`, `sqlite3`, etc. Just one line has to be changed to load the appropriate one.
 
-![image](https://user-images.githubusercontent.com/4362224/202903625-096d00f4-957e-4eed-8e35-c7489673c4be.png)
+![image](https://github.com/user-attachments/assets/7f94af5b-bc72-4c14-a85c-d30e01a75002)
 
 # What it is NOT?
 
