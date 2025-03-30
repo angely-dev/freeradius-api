@@ -26,7 +26,7 @@ A lightweight REST API on top of the [FreeRADIUS](https://freeradius.org) databa
 * It provides a bit of logic and [#semantic](https://github.com/angely-dev/freeradius-api#semantic) to ensure some data consistency
 * It aims to be KISS so that it can be plugged or forked for adding more business logic
 
-Based on [Pydantic](https://github.com/pydantic/pydantic) and [FastAPI](https://github.com/tiangolo/fastapi). But you can stick with the [`pyfreeradius`](https://github.com/angely-dev/freeradius-api/blob/master/src/pyfreeradius) package and build your own API over it.
+Based on [Pydantic](https://github.com/pydantic/pydantic) and [FastAPI](https://github.com/tiangolo/fastapi). But you can stick with the [`pyfreeradius`](https://github.com/angely-dev/freeradius-api/blob/master/freeradius-api/pyfreeradius) package and build your own API over it.
 
 > **Why Python?** Because it tends to be the de-facto standard in network automation, yet the model-centric approach taken here allows for other implementations. Feel free to adapt!
 
@@ -303,7 +303,7 @@ mysql-connector-python
 pip install -r requirements.txt
 ```
 
-* Edit [`src/settings.py`](https://github.com/angely-dev/freeradius-api/blob/master/src/settings.py) to set your DB settings (driver, connection and table names):
+* Edit [`src/settings.py`](https://github.com/angely-dev/freeradius-api/blob/master/freeradius-api/settings.py) to set your DB settings (driver, connection and table names):
 
 ```py
 # Uncomment the appropriate line matching your DB-API 2.0 (PEP 249) enabled driver
@@ -359,14 +359,14 @@ INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 
 * Then go to: http://localhost:8000/docs
 
-![image](https://user-images.githubusercontent.com/4362224/202903625-096d00f4-957e-4eed-8e35-c7489673c4be.png)
+![image](https://github.com/user-attachments/assets/7f94af5b-bc72-4c14-a85c-d30e01a75002)
 
 ### Package only
 
 You are free to use the core package without the API.
 
 The steps are the exact same except you don't run the API at the end.
-I did provide a [`sample.py`](https://github.com/angely-dev/freeradius-api/blob/master/src/sample.py) file:
+I did provide a [`sample.py`](https://github.com/angely-dev/freeradius-api/blob/master/freeradius-api/sample.py) file:
 
 > **Note:** the term *repository* refers to the Repository pattern. See the [#conceptual-approach](#conceptual-approach).
 
@@ -539,7 +539,7 @@ print(user_repo.find_usernames(from_username='k')) # fetches usernames starting 
 user_repo.exists('aaa')                 # good
 ```
 
-The number of items per page is settable in the [`src/settings.py`](https://github.com/angely-dev/freeradius-api/blob/master/src/settings.py) file (it defaults to `100`).
+The number of items per page is settable in the [`src/settings.py`](https://github.com/angely-dev/freeradius-api/blob/master/freeradius-api/settings.py) file (it defaults to `100`).
 
 ## Using the API
 
