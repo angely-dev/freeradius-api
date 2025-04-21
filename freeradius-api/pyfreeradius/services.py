@@ -126,7 +126,8 @@ class UserService:
                     if not self.group_repo.exists(usergroup.groupname):
                         return Result(
                             error_type=ErrorType.GROUP_NOT_FOUND,
-                            error_info=f"Given group '{usergroup.groupname}' does not exist: create it first",
+                            error_info=f"Given group '{usergroup.groupname}' does not exist: create it first"
+                            "create it first or set 'allow_groups_creation' parameter to true",
                         )
 
         if (user_update.groups or user_update.groups == []) and prevent_groups_deletion:
@@ -228,7 +229,8 @@ class GroupService:
                     if not self.user_repo.exists(groupuser.username):
                         return Result(
                             error_type=ErrorType.USER_NOT_FOUND,
-                            error_info=f"Given user '{groupuser.username}' does not exist: create it first",
+                            error_info=f"Given user '{groupuser.username}' does not exist: create it first"
+                            "create it first or set 'allow_users_creation' parameter to true",
                         )
 
         if (group_update.users or group_update.users == []) and prevent_users_deletion:
