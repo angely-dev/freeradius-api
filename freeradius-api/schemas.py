@@ -32,11 +32,12 @@ class UserUpdate(BaseModel):
         return self
 
     model_config = {
+        "extra": "forbid",
         "json_schema_extra": {
             "examples": [
                 {"checks": [AttributeOpValue(attribute="Cleartext-Password", op=":=", value="new-pass").model_dump()]}
             ]
-        }
+        },
     }
 
 
@@ -67,13 +68,14 @@ class GroupUpdate(BaseModel):
         return self
 
     model_config = {
+        "extra": "forbid",
         "json_schema_extra": {
             "examples": [
                 {
                     "replies": [AttributeOpValue(attribute="Filter-Id", op=":=", value="20m").model_dump()],
                 }
             ]
-        }
+        },
     }
 
 
@@ -81,4 +83,7 @@ class NasUpdate(BaseModel):
     shortname: Annotated[str, StringConstraints(min_length=1)] | None = None
     secret: Annotated[str, StringConstraints(min_length=1)] | None = None
 
-    model_config = {"json_schema_extra": {"examples": [{"shortname": "new-shortname", "secret": "new-secret"}]}}
+    model_config = {
+        "extra": "forbid",
+        "json_schema_extra": {"examples": [{"shortname": "new-shortname", "secret": "new-secret"}]},
+    }

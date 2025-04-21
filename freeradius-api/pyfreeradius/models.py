@@ -16,15 +16,21 @@ class AttributeOpValue(BaseModel):
     op: Annotated[str, StringConstraints(min_length=1)]
     value: Annotated[str, StringConstraints(min_length=1)]
 
+    model_config = {"extra": "forbid"}
+
 
 class UserGroup(BaseModel):
     groupname: Annotated[str, StringConstraints(min_length=1)]
     priority: Annotated[int, Field(ge=1)] = 1
 
+    model_config = {"extra": "forbid"}
+
 
 class GroupUser(BaseModel):
     username: Annotated[str, StringConstraints(min_length=1)]
     priority: Annotated[int, Field(ge=1)] = 1
+
+    model_config = {"extra": "forbid"}
 
 
 class User(BaseModel):
@@ -47,6 +53,7 @@ class User(BaseModel):
         return self
 
     model_config = {
+        "extra": "forbid",
         "json_schema_extra": {
             "examples": [
                 {
@@ -61,7 +68,7 @@ class User(BaseModel):
                     "groups": [UserGroup(groupname="my-group").model_dump()],
                 }
             ]
-        }
+        },
     }
 
 
@@ -85,6 +92,7 @@ class Group(BaseModel):
         return self
 
     model_config = {
+        "extra": "forbid",
         "json_schema_extra": {
             "examples": [
                 {
@@ -92,7 +100,7 @@ class Group(BaseModel):
                     "replies": [AttributeOpValue(attribute="Filter-Id", op=":=", value="10m").model_dump()],
                 }
             ]
-        }
+        },
     }
 
 
@@ -102,5 +110,6 @@ class Nas(BaseModel):
     secret: Annotated[str, StringConstraints(min_length=1)]
 
     model_config = {
-        "json_schema_extra": {"examples": [{"nasname": "5.5.5.5", "shortname": "my-nas", "secret": "my-secret"}]}
+        "extra": "forbid",
+        "json_schema_extra": {"examples": [{"nasname": "5.5.5.5", "shortname": "my-nas", "secret": "my-secret"}]},
     }
