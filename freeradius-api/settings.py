@@ -1,3 +1,5 @@
+from pyfreeradius.repositories import RepositorySettings
+
 # Uncomment the appropriate line matching your DB-API 2.0 (PEP 249) enabled driver
 DB_DRIVER = "mysql.connector"
 # DB_DRIVER = "pymysql"
@@ -13,16 +15,18 @@ DB_USER = "raduser"
 DB_PASS = "radpass"
 DB_HOST = "mydb"
 
-# Database table names
-RADCHECK = "radcheck"
-RADREPLY = "radreply"
-RADGROUPCHECK = "radgroupcheck"
-RADGROUPREPLY = "radgroupreply"
-RADUSERGROUP = "radusergroup"
-NAS = "nas"
-
-# Number of results per page for pagination
-PER_PAGE = 100
+# Database table settings
+REPO_SETTINGS = RepositorySettings(
+    # number of results per page for pagination
+    items_per_page=100,
+    # table names
+    radcheck="radcheck",
+    radreply="radreply",
+    radgroupcheck="radgroupcheck",
+    radgroupreply="radgroupreply",
+    radusergroup="radusergroup",
+    nas="nas",
+)
 
 # API_URL will be used to set the "Location" header field
 # after a resource has been created (POST) as per RFC 7231
