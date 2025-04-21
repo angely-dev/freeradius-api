@@ -3,7 +3,7 @@
 
 ---
 
-_Doc is about to be updated! Some sections may be obselete. I made recent changes (namely `PATCH` endpoints and services layer) which I have to document._
+_Doc is about to be updated! Some sections may be obsolete. I made recent changes (namely `PATCH` endpoints and services layer) which I have to document._
 
 ---
 
