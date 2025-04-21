@@ -96,7 +96,7 @@ def test_nas(services):
     assert result.is_success()
     assert result.value == nas1  # NAS now found
 
-    result = services.nas.get_all(from_nasname="my-nas.pyfreeradiu")
+    result = services.nas.get_all(from_nasname="nas1.pyfreeradiu")
     assert result.is_success()
     assert nas1 in result.value  # NAS now part of collection
 
