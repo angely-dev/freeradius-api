@@ -3,9 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, FastAPI, HTTPException, Query, Response
 from pydantic import BaseModel
 
-from dependencies import GroupRepositoryDep, NasRepositoryDep, UserRepositoryDep
+from dependencies import GroupServiceDep, NasServiceDep, UserServiceDep
 from pyfreeradius.models import Group, Nas, User
-from schemas import GroupUpdate, NasUpdate, UserUpdate
+from pyfreeradius.schemas import GroupUpdate, NasUpdate, UserUpdate
+from pyfreeradius.services import ErrorType
 from settings import API_URL
 
 
@@ -27,8 +28,8 @@ def read_root():
 
 
 @router.get("/nas", tags=["nas"], status_code=200, response_model=list[Nas])
-def get_nases(nas_repo: NasRepositoryDep, response: Response, from_nasname: str | None = None):
-    nasnames = nas_repo.find_all(from_nasname)
+def get_nases(nas_service: NasServiceDep, response: Response, from_nasname: str | None = None):
+    nasnames = nas_service.get_all(from_nasname).value
     if nasnames:
         last_nasname = nasnames[-1].nasname
         response.headers["Link"] = f'<{API_URL}/nas?from_nasname={last_nasname}>; rel="next"'
@@ -36,8 +37,8 @@ def get_nases(nas_repo: NasRepositoryDep, response: Response, from_nasname: str 
 
 
 @router.get("/users", tags=["users"], status_code=200, response_model=list[User])
-def get_users(user_repo: UserRepositoryDep, response: Response, from_username: str | None = None):
-    usernames = user_repo.find_all(from_username)
+def get_users(user_service: UserServiceDep, response: Response, from_username: str | None = None):
+    usernames = user_service.get_all(from_username).value
     if usernames:
         last_username = usernames[-1].username
         response.headers["Link"] = f'<{API_URL}/users?from_username={last_username}>; rel="next"'
@@ -45,8 +46,8 @@ def get_users(user_repo: UserRepositoryDep, response: Response, from_username: s
 
 
 @router.get("/groups", tags=["groups"], status_code=200, response_model=list[Group])
-def get_groups(group_repo: GroupRepositoryDep, response: Response, from_groupname: str | None = None):
-    groupnames = group_repo.find_all(from_groupname)
+def get_groups(group_service: GroupServiceDep, response: Response, from_groupname: str | None = None):
+    groupnames = group_service.get_all(from_groupname).value
     if groupnames:
         last_groupname = groupnames[-1].groupname
         response.headers["Link"] = f'<{API_URL}/groups?from_groupname={last_groupname}>; rel="next"'
@@ -54,35 +55,36 @@ def get_groups(group_repo: GroupRepositoryDep, response: Response, from_groupnam
 
 
 @router.get("/nas/{nasname}", tags=["nas"], status_code=200, response_model=Nas, responses={404: error_404})
-def get_nas(nasname: str, nas_repo: NasRepositoryDep):
-    nas = nas_repo.find_one(nasname)
-    if not nas:
-        raise HTTPException(404, "Given NAS does not exist")
-    return nas
+def get_nas(nasname: str, nas_service: NasServiceDep):
+    result = nas_service.get(nasname)
+    if result.error_type == ErrorType.NAS_NOT_FOUND:
+        raise HTTPException(404, result.error_info)
+    return result.value
 
 
 @router.get("/users/{username}", tags=["users"], status_code=200, response_model=User, responses={404: error_404})
-def get_user(username: str, user_repo: UserRepositoryDep):
-    user = user_repo.find_one(username)
-    if not user:
-        raise HTTPException(404, "Given user does not exist")
-    return user
+def get_user(username: str, user_service: UserServiceDep):
+    result = user_service.get(username)
+    if result.error_type == ErrorType.USER_NOT_FOUND:
+        raise HTTPException(404, result.error_info)
+    return result.value
 
 
 @router.get("/groups/{groupname}", tags=["groups"], status_code=200, response_model=Group, responses={404: error_404})
-def get_group(groupname: str, group_repo: GroupRepositoryDep):
-    group = group_repo.find_one(groupname)
-    if not group:
-        raise HTTPException(404, "Given group does not exist")
-    return group
+def get_group(groupname: str, group_service: GroupServiceDep):
+    result = group_service.get(groupname)
+    if result.error_type == ErrorType.GROUP_NOT_FOUND:
+        raise HTTPException(404, result.error_info)
+    return result.value
 
 
 @router.post("/nas", tags=["nas"], status_code=201, response_model=Nas, responses={409: error_409})
-def post_nas(nas: Nas, nas_repo: NasRepositoryDep, response: Response):
-    if nas_repo.exists(nas.nasname):
-        raise HTTPException(409, "Given NAS already exists")
+def post_nas(nas: Nas, nas_service: NasServiceDep, response: Response):
+    result = nas_service.create(nas)
 
-    nas_repo.add(nas)
+    if result.error_type == ErrorType.NAS_ALREADY_EXISTS:
+        raise HTTPException(409, result.error_info)
+
     response.headers["Location"] = f"{API_URL}/nas/{nas.nasname}"
     return nas
 
@@ -90,102 +92,71 @@ def post_nas(nas: Nas, nas_repo: NasRepositoryDep, response: Response):
 @router.post("/users", tags=["users"], status_code=201, response_model=User, responses={409: error_409})
 def post_user(
     user: User,
-    user_repo: UserRepositoryDep,
-    group_repo: GroupRepositoryDep,
+    user_service: UserServiceDep,
     response: Response,
     allow_groups_creation: Annotated[
         bool, Query(description="If set to true, nonexistent groups will be created during user creation")
     ] = False,
 ):
-    if user_repo.exists(user.username):
-        raise HTTPException(409, "Given user already exists")
+    result = user_service.create(user=user, allow_groups_creation=allow_groups_creation)
 
-    if not allow_groups_creation:
-        for usergroup in user.groups:
-            if not group_repo.exists(usergroup.groupname):
-                raise HTTPException(
-                    422,
-                    (
-                        f"Given group '{usergroup.groupname}' does not exist: "
-                        "create it first or set 'allow_groups_creation' parameter to true"
-                    ),
-                )
+    if result.error_type == ErrorType.USER_ALREADY_EXISTS:
+        raise HTTPException(409, result.error_info)
+    if result.error_type == ErrorType.GROUP_NOT_FOUND:
+        raise HTTPException(422, result.error_info)
 
-    user_repo.add(user)
     response.headers["Location"] = f"{API_URL}/users/{user.username}"
-    return user
+    return result.value
 
 
 @router.post("/groups", tags=["groups"], status_code=201, response_model=Group, responses={409: error_409})
 def post_group(
     group: Group,
-    group_repo: GroupRepositoryDep,
-    user_repo: UserRepositoryDep,
+    group_service: GroupServiceDep,
     response: Response,
     allow_users_creation: Annotated[
         bool, Query(description="If set to true, nonexistent users will be created during group creation")
     ] = False,
 ):
-    if group_repo.exists(group.groupname):
-        raise HTTPException(409, "Given group already exists")
+    result = group_service.create(group=group, allow_users_creation=allow_users_creation)
 
-    if not allow_users_creation:
-        for groupuser in group.users:
-            if not user_repo.exists(groupuser.username):
-                raise HTTPException(
-                    422,
-                    (
-                        f"Given user '{groupuser.username}' does not exist: "
-                        "create it first or set 'allow_users_creation' parameter to true"
-                    ),
-                )
+    if result.error_type == ErrorType.GROUP_ALREADY_EXISTS:
+        raise HTTPException(409, result.error_info)
+    if result.error_type == ErrorType.USER_NOT_FOUND:
+        raise HTTPException(422, result.error_info)
 
-    group_repo.add(group)
     response.headers["Location"] = f"{API_URL}/groups/{group.groupname}"
-    return group
+    return result.value
 
 
 @router.delete("/nas/{nasname}", tags=["nas"], status_code=204, responses={404: error_404})
-def delete_nas(nasname: str, nas_repo: NasRepositoryDep):
-    if not nas_repo.exists(nasname):
-        raise HTTPException(404, "Given NAS does not exist")
+def delete_nas(nasname: str, nas_service: NasServiceDep):
+    result = nas_service.delete(nasname)
 
-    nas_repo.remove(nasname)
+    if result.error_type == ErrorType.NAS_NOT_FOUND:
+        raise HTTPException(404, result.error_info)
 
 
 @router.delete("/users/{username}", tags=["users"], status_code=204, responses={404: error_404})
 def delete_user(
     username: str,
-    user_repo: UserRepositoryDep,
-    group_repo: GroupRepositoryDep,
+    user_service: UserServiceDep,
     prevent_groups_deletion: Annotated[
         bool, Query(description="If set to false, user groups without any attributes will be deleted")
     ] = True,
 ):
-    user = user_repo.find_one(username)
-    if not user:
-        raise HTTPException(404, detail="Given user does not exist")
+    result = user_service.delete(username=username, prevent_groups_deletion=prevent_groups_deletion)
 
-    if prevent_groups_deletion:
-        for usergroup in user.groups:
-            group = group_repo.find_one(usergroup.groupname)
-            if group and not (group.checks or group.replies):
-                raise HTTPException(
-                    422,
-                    (
-                        f"Group '{group.groupname}' would be deleted as it has no attributes: "
-                        "delete it first or set 'prevent_groups_deletion' parameter to false"
-                    ),
-                )
-
-    user_repo.remove(username)
+    if result.error_type == ErrorType.USER_NOT_FOUND:
+        raise HTTPException(404, result.error_info)
+    if result.error_type == ErrorType.GROUP_WOULD_BE_DELETED:
+        raise HTTPException(422, result.error_info)
 
 
 @router.delete("/groups/{groupname}", tags=["groups"], status_code=204, responses={404: error_404})
 def delete_group(
     groupname: str,
-    group_repo: GroupRepositoryDep,
-    user_repo: UserRepositoryDep,
+    group_service: GroupServiceDep,
     ignore_users: Annotated[
         bool, Query(description="If set to true, the group will be deleted even if it still has users")
     ] = False,
@@ -193,50 +164,32 @@ def delete_group(
         bool, Query(description="If set to false, group users without any attributes will be deleted")
     ] = True,
 ):
-    group = group_repo.find_one(groupname)
-    if not group:
-        raise HTTPException(404, "Given group does not exist")
+    result = group_service.delete(
+        groupname=groupname, ignore_users=ignore_users, prevent_users_deletion=prevent_users_deletion
+    )
 
-    if group.users and not ignore_users:
-        raise HTTPException(422, "Given group has users: delete them first or set 'ignore_users' parameter to true")
-
-    if prevent_users_deletion:
-        for groupuser in group.users:
-            user = user_repo.find_one(groupuser.username)
-            if user and not (user.checks or user.replies):
-                raise HTTPException(
-                    422,
-                    (
-                        f"User '{user.username}' would be deleted as it has no attributes: "
-                        "delete it first or set 'prevent_users_deletion' parameter to false"
-                    ),
-                )
-
-    group_repo.remove(groupname)
+    if result.error_type == ErrorType.GROUP_NOT_FOUND:
+        raise HTTPException(404, result.error_info)
+    if result.error_type in [ErrorType.GROUP_HAS_USERS, ErrorType.USER_WOULD_BE_DELETED]:
+        raise HTTPException(422, result.error_info)
 
 
 @router.patch("/nas/{nasname}", tags=["nas"], status_code=200, response_model=Nas, responses={404: error_404})
-def patch_nas(
-    nasname: str,
-    nas_update: NasUpdate,
-    nas_repo: NasRepositoryDep,
-    response: Response,
-):
-    nas = nas_repo.find_one(nasname)
-    if not nas:
-        raise HTTPException(404, "Given NAS does not exist")
+def patch_nas(nasname: str, nas_update: NasUpdate, nas_service: NasServiceDep, response: Response):
+    result = nas_service.update(nasname=nasname, nas_update=nas_update)
 
-    nas_repo.set(nasname, new_shortname=nas_update.shortname, new_secret=nas_update.secret)
+    if result.error_type == ErrorType.NAS_NOT_FOUND:
+        raise HTTPException(404, result.error_info)
+
     response.headers["Location"] = f"{API_URL}/nas/{nasname}"
-    return nas_repo.find_one(nasname)
+    return result.value
 
 
 @router.patch("/users/{username}", tags=["users"], status_code=200, response_model=User, responses={404: error_404})
 def patch_user(
     username: str,
     user_update: UserUpdate,
-    user_repo: UserRepositoryDep,
-    group_repo: GroupRepositoryDep,
+    user_service: UserServiceDep,
     response: Response,
     allow_groups_creation: Annotated[
         bool, Query(description="If set to true, nonexistent groups will be created during user modification")
@@ -245,47 +198,31 @@ def patch_user(
         bool, Query(description="If set to false, user groups without any attributes will be deleted")
     ] = True,
 ):
-    user = user_repo.find_one(username)
-    if not user:
-        raise HTTPException(404, "Given user does not exist")
-
-    if user_update.groups:
-        if not allow_groups_creation:
-            for usergroup in user_update.groups:
-                if not group_repo.exists(usergroup.groupname):
-                    raise HTTPException(422, f"Given group '{usergroup.groupname}' does not exist: create it first")
-
-    if (user_update.groups or user_update.groups == []) and prevent_groups_deletion:
-        for usergroup in user.groups:
-            group = group_repo.find_one(usergroup.groupname)
-            if group and not (group.checks or group.replies):
-                raise HTTPException(
-                    422,
-                    (
-                        f"Group '{group.groupname}' would be deleted as it has no attributes: "
-                        "delete it first or set 'prevent_groups_deletion' parameter to false"
-                    ),
-                )
-
-    new_checks = user.checks if user_update.checks is None else user_update.checks
-    new_replies = user.replies if user_update.replies is None else user_update.replies
-    new_groups = user.groups if user_update.groups is None else user_update.groups
-    if not (new_checks or new_replies or new_groups):
-        raise HTTPException(422, "Resulting user would have no attributes and no groups")
-
-    user_repo.set(
-        username, new_checks=user_update.checks, new_replies=user_update.replies, new_groups=user_update.groups
+    result = user_service.update(
+        username=username,
+        user_update=user_update,
+        allow_groups_creation=allow_groups_creation,
+        prevent_groups_deletion=prevent_groups_deletion,
     )
+
+    if result.error_type == ErrorType.USER_NOT_FOUND:
+        raise HTTPException(404, result.error_info)
+    if result.error_type in [
+        ErrorType.GROUP_NOT_FOUND,
+        ErrorType.GROUP_WOULD_BE_DELETED,
+        ErrorType.USER_WOULD_BE_DELETED,
+    ]:
+        raise HTTPException(422, result.error_info)
+
     response.headers["Location"] = f"{API_URL}/users/{username}"
-    return user_repo.find_one(username)
+    return result.value
 
 
 @router.patch("/groups/{groupname}", tags=["groups"], status_code=200, response_model=Group, responses={404: error_404})
 def patch_group(
     groupname: str,
     group_update: GroupUpdate,
-    group_repo: GroupRepositoryDep,
-    user_repo: UserRepositoryDep,
+    group_service: GroupServiceDep,
     response: Response,
     allow_users_creation: Annotated[
         bool, Query(description="If set to true, nonexistent users will be created during group modification")
@@ -294,39 +231,24 @@ def patch_group(
         bool, Query(description="If set to false, group users without any attributes will be deleted")
     ] = True,
 ):
-    group = group_repo.find_one(groupname)
-    if not group:
-        raise HTTPException(404, "Given group does not exist")
-
-    if group_update.users:
-        if not allow_users_creation:
-            for groupuser in group_update.users:
-                if not user_repo.exists(groupuser.username):
-                    raise HTTPException(422, f"Given user '{groupuser.username}' does not exist: create it first")
-
-    if (group_update.users or group_update.users == []) and prevent_users_deletion:
-        for groupuser in group.users:
-            user = user_repo.find_one(groupuser.username)
-            if user and not (user.checks or user.replies):
-                raise HTTPException(
-                    422,
-                    (
-                        f"User '{user.username}' would be deleted as it has no attributes: "
-                        "delete it first or set 'prevent_users_deletion' parameter to false"
-                    ),
-                )
-
-    new_checks = group.checks if group_update.checks is None else group_update.checks
-    new_replies = group.replies if group_update.replies is None else group_update.replies
-    new_users = group.users if group_update.users is None else group_update.users
-    if not (new_checks or new_replies or new_users):
-        raise HTTPException(422, "Resulting group would have no attributes and no users")
-
-    group_repo.set(
-        groupname, new_checks=group_update.checks, new_replies=group_update.replies, new_users=group_update.users
+    result = group_service.update(
+        groupname=groupname,
+        group_update=group_update,
+        allow_users_creation=allow_users_creation,
+        prevent_users_deletion=prevent_users_deletion,
     )
+
+    if result.error_type == ErrorType.GROUP_NOT_FOUND:
+        raise HTTPException(404, result.error_info)
+    if result.error_type in [
+        ErrorType.USER_NOT_FOUND,
+        ErrorType.USER_WOULD_BE_DELETED,
+        ErrorType.GROUP_WOULD_BE_DELETED,
+    ]:
+        raise HTTPException(422, result.error_info)
+
     response.headers["Location"] = f"{API_URL}/groups/{groupname}"
-    return group_repo.find_one(groupname)
+    return result.value
 
 
 # API is now ready!

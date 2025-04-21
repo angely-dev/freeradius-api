@@ -4,13 +4,14 @@ from fastapi import Depends
 
 from database import db_connect
 from pyfreeradius.repositories import GroupRepository, NasRepository, UserRepository
+from pyfreeradius.services import GroupService, NasService, UserService
 
 #
 # Here we use FastAPI Dependency Injection system.
 #
 # For each API request:
 #   - a short-lived DB session will be established,
-#   - appropriate repositories will be instantiated.
+#   - appropriate repositories and services will be instantiated.
 #
 
 
@@ -30,24 +31,24 @@ def get_db_session():
         db_session.close()
 
 
-# Repositories depend on the DB session
+# Services depend on the repositories which depend on the DB session
 
 
-def get_user_repository(db_session=Depends(get_db_session)) -> UserRepository:
-    return UserRepository(db_session)
+def get_user_service(db_session=Depends(get_db_session)) -> UserService:
+    return UserService(user_repo=UserRepository(db_session), group_repo=GroupRepository(db_session))
 
 
-def get_group_repository(db_session=Depends(get_db_session)) -> GroupRepository:
-    return GroupRepository(db_session)
+def get_group_service(db_session=Depends(get_db_session)) -> GroupService:
+    return GroupService(group_repo=GroupRepository(db_session), user_repo=UserRepository(db_session))
 
 
-def get_nas_repository(db_session=Depends(get_db_session)) -> NasRepository:
-    return NasRepository(db_session)
+def get_nas_service(db_session=Depends(get_db_session)) -> NasService:
+    return NasService(nas_repo=NasRepository(db_session))
 
 
-# API routes will depend on the repositories
+# API routes will depend on the services
 # (using Annotated dependencies for code reuse as per FastAPI doc)
 
-UserRepositoryDep = Annotated[UserRepository, Depends(get_user_repository)]
-GroupRepositoryDep = Annotated[GroupRepository, Depends(get_group_repository)]
-NasRepositoryDep = Annotated[NasRepository, Depends(get_nas_repository)]
+UserServiceDep = Annotated[UserService, Depends(get_user_service)]
+GroupServiceDep = Annotated[GroupService, Depends(get_group_service)]
+NasServiceDep = Annotated[NasService, Depends(get_nas_service)]

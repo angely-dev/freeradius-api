@@ -1,19 +1,53 @@
 from pydantic import ValidationError
-from pytest import raises
+from pytest import fixture, raises
 
 from database import db_connect
 from pyfreeradius.models import AttributeOpValue, Group, GroupUser, Nas, User, UserGroup
 from pyfreeradius.repositories import GroupRepository, NasRepository, UserRepository
 
-# Load the FreeRADIUS repositories
-db_connection = db_connect()
-user_repo = UserRepository(db_connection)
-group_repo = GroupRepository(db_connection)
-nas_repo = NasRepository(db_connection)
+#
+# Each test will depend on repositories instance.
+#
 
-# Some dumb attributes for the tests
+
+class Repositories:
+    def __init__(self, user: UserRepository, group: GroupRepository, nas: NasRepository):
+        self.user = user
+        self.group = group
+        self.nas = nas
+
+
+@fixture
+def repositories():
+    db_session = db_connect()
+    try:
+        yield Repositories(
+            user=UserRepository(db_session),
+            group=GroupRepository(db_session),
+            nas=NasRepository(db_session),
+        )
+    except:
+        # on any error, we rollback the DB
+        db_session.rollback()
+        raise
+    else:
+        # otherwise, we commit the DB
+        db_session.commit()
+    finally:
+        # in any case, we close the DB session
+        db_session.close()
+
+
+#
+# Some data reused across the tests.
+#
+
 checks = [AttributeOpValue(attribute="a", op=":=", value="b")]
 replies = [AttributeOpValue(attribute="c", op=":=", value="d")]
+
+#
+# The tests.
+#
 
 
 def test_invalid_user():
@@ -67,115 +101,115 @@ def test_invalid_nas():
         Nas()
 
 
-def test_valid_user():
+def test_valid_user(repositories):
     u = User(username="u", checks=checks, replies=replies)
 
     # adding
-    assert not user_repo.exists(u.username)
-    user_repo.add(u)
-    assert user_repo.exists(u.username)
+    assert not repositories.user.exists(u.username)
+    repositories.user.add(u)
+    assert repositories.user.exists(u.username)
 
     # finding
-    assert user_repo.find_one(u.username) == u
-    assert u in user_repo.find_all()
-    assert u in user_repo.find_all(from_username="t")
+    assert repositories.user.find_one(u.username) == u
+    assert u in repositories.user.find_all()
+    assert u in repositories.user.find_all(from_username="t")
 
     # modifying
-    user_repo.set(u.username, new_replies=checks, new_checks=replies)
-    assert user_repo.find_one(u.username).replies == checks
-    assert user_repo.find_one(u.username).checks == replies
+    repositories.user.set(u.username, new_replies=checks, new_checks=replies)
+    assert repositories.user.find_one(u.username).replies == checks
+    assert repositories.user.find_one(u.username).checks == replies
 
     # removing
-    user_repo.remove(u.username)
-    assert not user_repo.exists(u.username)
-    assert user_repo.find_one(u.username) is None
+    repositories.user.remove(u.username)
+    assert not repositories.user.exists(u.username)
+    assert repositories.user.find_one(u.username) is None
 
 
-def test_valid_group():
+def test_valid_group(repositories):
     g = Group(groupname="g", checks=checks, replies=replies)
 
     # adding
-    assert not group_repo.exists(g.groupname)
-    group_repo.add(g)
-    assert group_repo.exists(g.groupname)
+    assert not repositories.group.exists(g.groupname)
+    repositories.group.add(g)
+    assert repositories.group.exists(g.groupname)
 
     # finding
-    assert group_repo.find_one(g.groupname) == g
-    assert g in group_repo.find_all()
-    assert g in group_repo.find_all(from_groupname="f")
+    assert repositories.group.find_one(g.groupname) == g
+    assert g in repositories.group.find_all()
+    assert g in repositories.group.find_all(from_groupname="f")
 
     # modifying
-    group_repo.set(g.groupname, new_replies=checks, new_checks=replies)
-    assert group_repo.find_one(g.groupname).replies == checks
-    assert group_repo.find_one(g.groupname).checks == replies
+    repositories.group.set(g.groupname, new_replies=checks, new_checks=replies)
+    assert repositories.group.find_one(g.groupname).replies == checks
+    assert repositories.group.find_one(g.groupname).checks == replies
 
     # removing
-    group_repo.remove(g.groupname)
-    assert not group_repo.exists(g.groupname)
-    assert group_repo.find_one(g.groupname) is None
+    repositories.group.remove(g.groupname)
+    assert not repositories.group.exists(g.groupname)
+    assert repositories.group.find_one(g.groupname) is None
 
 
-def test_valid_nas():
+def test_valid_nas(repositories):
     n = Nas(nasname="1.1.1.1", shortname="sh", secret="se")
 
     # adding
-    assert not nas_repo.exists(n.nasname)
-    nas_repo.add(n)
-    assert nas_repo.exists(n.nasname)
+    assert not repositories.nas.exists(n.nasname)
+    repositories.nas.add(n)
+    assert repositories.nas.exists(n.nasname)
 
     # finding
-    assert nas_repo.find_one(n.nasname) == n
-    assert n in nas_repo.find_all()
-    assert n in nas_repo.find_all(from_nasname="1.1.1.0")
+    assert repositories.nas.find_one(n.nasname) == n
+    assert n in repositories.nas.find_all()
+    assert n in repositories.nas.find_all(from_nasname="1.1.1.0")
 
     # modifying
-    nas_repo.set(n.nasname, new_shortname="new-sh", new_secret="new-se")
-    assert nas_repo.find_one(n.nasname).shortname == "new-sh"
-    assert nas_repo.find_one(n.nasname).secret == "new-se"
+    repositories.nas.set(n.nasname, new_shortname="new-sh", new_secret="new-se")
+    assert repositories.nas.find_one(n.nasname).shortname == "new-sh"
+    assert repositories.nas.find_one(n.nasname).secret == "new-se"
 
     # removing
-    nas_repo.remove(n.nasname)
-    assert not nas_repo.exists(n.nasname)
-    assert nas_repo.find_one(n.nasname) is None
+    repositories.nas.remove(n.nasname)
+    assert not repositories.nas.exists(n.nasname)
+    assert repositories.nas.find_one(n.nasname) is None
 
 
-def test_usergroup():
+def test_usergroup(repositories):
     g = Group(groupname="g", checks=checks)
     u = User(username="u", checks=checks, groups=[UserGroup(groupname=g.groupname)])
 
     # adding
-    group_repo.add(g)
-    user_repo.add(u)
-    assert group_repo.has_users(g.groupname)  # group has users
+    repositories.group.add(g)
+    repositories.user.add(u)
+    assert repositories.group.has_users(g.groupname)  # group has users
 
     # modifying
-    user_repo.set(u.username, new_groups=[])
-    assert user_repo.find_one(u.username).groups == []
-    user_repo.set(u.username, new_groups=[UserGroup(groupname=g.groupname)])
-    assert user_repo.find_one(u.username).groups == u.groups
+    repositories.user.set(u.username, new_groups=[])
+    assert repositories.user.find_one(u.username).groups == []
+    repositories.user.set(u.username, new_groups=[UserGroup(groupname=g.groupname)])
+    assert repositories.user.find_one(u.username).groups == u.groups
 
     # removing
-    user_repo.remove(u.username)
-    assert not group_repo.has_users(g.groupname)  # group has no users
-    group_repo.remove(g.groupname)
+    repositories.user.remove(u.username)
+    assert not repositories.group.has_users(g.groupname)  # group has no users
+    repositories.group.remove(g.groupname)
 
 
-def test_groupuser():
+def test_groupuser(repositories):
     u = User(username="u", checks=checks)
     g = Group(groupname="g", checks=checks, users=[GroupUser(username=u.username)])
 
     # adding
-    user_repo.add(u)
-    group_repo.add(g)
-    assert group_repo.has_users(g.groupname)  # group has users
+    repositories.user.add(u)
+    repositories.group.add(g)
+    assert repositories.group.has_users(g.groupname)  # group has users
 
     # modifying
-    group_repo.set(g.groupname, new_users=[])
-    assert group_repo.find_one(g.groupname).users == []
-    group_repo.set(g.groupname, new_users=[GroupUser(username=u.username)])
-    assert group_repo.find_one(g.groupname).users == g.users
+    repositories.group.set(g.groupname, new_users=[])
+    assert repositories.group.find_one(g.groupname).users == []
+    repositories.group.set(g.groupname, new_users=[GroupUser(username=u.username)])
+    assert repositories.group.find_one(g.groupname).users == g.users
 
     # removing
-    user_repo.remove(u.username)
-    assert not group_repo.has_users(g.groupname)  # group has no users
-    group_repo.remove(g.groupname)
+    repositories.user.remove(u.username)
+    assert not repositories.group.has_users(g.groupname)  # group has no users
+    repositories.group.remove(g.groupname)
