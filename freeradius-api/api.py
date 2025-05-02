@@ -29,29 +29,29 @@ def read_root():
 
 @router.get("/nas", tags=["nas"], status_code=200, response_model=list[Nas])
 def get_nases(nas_service: NasServiceDep, response: Response, from_nasname: str | None = None):
-    nasnames = nas_service.get_all(from_nasname).value
-    if nasnames:
-        last_nasname = nasnames[-1].nasname
+    nas = nas_service.get_all(from_nasname).value
+    if nas:
+        last_nasname = nas[-1].nasname
         response.headers["Link"] = f'<{API_URL}/nas?from_nasname={last_nasname}>; rel="next"'
-    return nasnames
+    return nas
 
 
 @router.get("/users", tags=["users"], status_code=200, response_model=list[User])
 def get_users(user_service: UserServiceDep, response: Response, from_username: str | None = None):
-    usernames = user_service.get_all(from_username).value
-    if usernames:
-        last_username = usernames[-1].username
+    users = user_service.get_all(from_username).value
+    if users:
+        last_username = users[-1].username
         response.headers["Link"] = f'<{API_URL}/users?from_username={last_username}>; rel="next"'
-    return usernames
+    return users
 
 
 @router.get("/groups", tags=["groups"], status_code=200, response_model=list[Group])
 def get_groups(group_service: GroupServiceDep, response: Response, from_groupname: str | None = None):
-    groupnames = group_service.get_all(from_groupname).value
-    if groupnames:
-        last_groupname = groupnames[-1].groupname
+    groups = group_service.get_all(from_groupname).value
+    if groups:
+        last_groupname = groups[-1].groupname
         response.headers["Link"] = f'<{API_URL}/groups?from_groupname={last_groupname}>; rel="next"'
-    return groupnames
+    return groups
 
 
 @router.get("/nas/{nasname}", tags=["nas"], status_code=200, response_model=Nas, responses={404: error_404})
