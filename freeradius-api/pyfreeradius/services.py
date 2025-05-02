@@ -60,7 +60,7 @@ class UserService:
             raise ServiceExceptions.UserNotFound("Given user does not exist")
         return user
 
-    def get_all(self, from_username: str | None = None) -> list[User]:
+    def find_all(self, from_username: str | None = None) -> list[User]:
         return self.user_repo.find_all(from_username)
 
     def create(self, user: User, allow_groups_creation: bool = False) -> User:
@@ -149,7 +149,7 @@ class GroupService:
             raise ServiceExceptions.GroupNotFound("Given group does not exist")
         return group
 
-    def get_all(self, from_groupname: str | None = None) -> list[Group]:
+    def find_all(self, from_groupname: str | None = None) -> list[Group]:
         return self.group_repo.find_all(from_groupname)
 
     def create(self, group: Group, allow_users_creation: bool = False) -> Group:
@@ -242,7 +242,7 @@ class NasService:
             raise ServiceExceptions.NasNotFound("Given NAS does not exist")
         return nas
 
-    def get_all(self, from_nasname: str | None = None) -> list[Nas]:
+    def find_all(self, from_nasname: str | None = None) -> list[Nas]:
         return self.nas_repo.find_all(from_nasname)
 
     def create(self, nas: Nas) -> Nas:
