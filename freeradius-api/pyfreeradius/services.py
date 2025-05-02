@@ -1,58 +1,46 @@
-from enum import Enum
-from typing import Generic, TypeVar
-
-from pydantic import BaseModel, model_validator
-from typing_extensions import Self
-
 from .models import Group, Nas, User
 from .repositories import GroupRepository, NasRepository, UserRepository
 from .schemas import GroupUpdate, NasUpdate, UserUpdate
 
 #
-# Here we implement the Result pattern.
+# All possible domain errors.
 #
-# Instead of raising exceptions for known domain errors,
-# which will end up in exception-based control flow in upper layer,
-# we return a result indicating either a success or a failure.
+# A previous version has experimented with the Result Pattern in
+# order to prevent exception-based control flow in upper layers.
 #
-# In case of a success, the result carries the value (payload) to return.
-# In case of a failure, the result carries the error type and info.
+# This project being rather simple, and proposed as a package,
+# I ended up preferring exceptions to convey domain errors,
+# (this somewhat forces upper layers to catch or prevent them).
 #
 
 
-class ServiceError(str, Enum):
-    USER_ALREADY_EXISTS = "USER_ALREADY_EXISTS"
-    USER_NOT_FOUND = "USER_NOT_FOUND"
-    USER_WOULD_BE_DELETED = "USER_WOULD_BE_DELETED"
-    GROUP_ALREADY_EXISTS = "GROUP_ALREADY_EXISTS"
-    GROUP_HAS_USERS = "GROUP_HAS_USERS"
-    GROUP_NOT_FOUND = "GROUP_NOT_FOUND"
-    GROUP_WOULD_BE_DELETED = "GROUP_WOULD_BE_DELETED"
-    NAS_ALREADY_EXISTS = "NAS_ALREADY_EXISTS"
-    NAS_NOT_FOUND = "NAS_NOT_FOUND"
+class ServiceExceptions:
+    class UserNotFound(Exception):
+        pass
 
+    class GroupNotFound(Exception):
+        pass
 
-T = TypeVar("T")
+    class NasNotFound(Exception):
+        pass
 
+    class UserAlreadyExists(Exception):
+        pass
 
-class Result(BaseModel, Generic[T]):
-    value: T | None = None
-    error: ServiceError | None = None
-    error_detail: str | None = None
+    class GroupAlreadyExists(Exception):
+        pass
 
-    @model_validator(mode="after")
-    def check_fields(self) -> Self:
-        if self.error_detail and not self.error:
-            raise ValueError("'error' must be provided if 'error_detail' is set")
-        if self.error and self.value:
-            raise ValueError("'value' must not be provided if 'error' is set")
-        return self
+    class NasAlreadyExists(Exception):
+        pass
 
-    def is_success(self) -> bool:
-        return self.error is None
+    class UserWouldBeDeleted(Exception):
+        pass
 
-    def is_failure(self) -> bool:
-        return not self.is_success()
+    class GroupWouldBeDeleted(Exception):
+        pass
+
+    class GroupStillHasUsers(Exception):
+        pass
 
 
 #
@@ -66,48 +54,45 @@ class UserService:
         self.user_repo = user_repo
         self.group_repo = group_repo
 
-    def get(self, username: str) -> Result[User]:
+    def get(self, username: str) -> User:
         user = self.user_repo.find_one(username)
         if not user:
-            return Result(error=ServiceError.USER_NOT_FOUND, error_detail="Given user does not exist")
-        return Result(value=user)
+            raise ServiceExceptions.UserNotFound("Given user does not exist")
+        return user
 
-    def get_all(self, from_username: str | None = None) -> Result[list[User]]:
-        return Result(value=self.user_repo.find_all(from_username))
+    def get_all(self, from_username: str | None = None) -> list[User]:
+        return self.user_repo.find_all(from_username)
 
-    def create(self, user: User, allow_groups_creation: bool = False) -> Result[User]:
+    def create(self, user: User, allow_groups_creation: bool = False) -> User:
         if self.user_repo.exists(user.username):
-            return Result(error=ServiceError.USER_ALREADY_EXISTS, error_detail="Given user already exists")
+            raise ServiceExceptions.UserAlreadyExists("Given user already exists")
 
         if not allow_groups_creation:
             for usergroup in user.groups:
                 if not self.group_repo.exists(usergroup.groupname):
-                    return Result(
-                        error=ServiceError.GROUP_NOT_FOUND,
-                        error_detail=f"Given group '{usergroup.groupname}' does not exist: "
+                    raise ServiceExceptions.GroupNotFound(
+                        f"Given group '{usergroup.groupname}' does not exist: "
                         "create it first or set 'allow_groups_creation' parameter to true",
                     )
 
         self.user_repo.add(user)
-        return Result(value=user)
+        return user
 
-    def delete(self, username: str, prevent_groups_deletion: bool = True) -> Result[None]:
+    def delete(self, username: str, prevent_groups_deletion: bool = True):
         user = self.user_repo.find_one(username)
         if not user:
-            return Result(error=ServiceError.USER_NOT_FOUND, error_detail="Given user does not exist")
+            raise ServiceExceptions.UserNotFound("Given user does not exist")
 
         if prevent_groups_deletion:
             for usergroup in user.groups:
                 group = self.group_repo.find_one(usergroup.groupname)
                 if group and not (group.checks or group.replies):
-                    return Result(
-                        error=ServiceError.GROUP_WOULD_BE_DELETED,
-                        error_detail=f"Group '{group.groupname}' would be deleted as it has no attributes: "
+                    raise ServiceExceptions.GroupWouldBeDeleted(
+                        f"Group '{group.groupname}' would be deleted as it has no attributes: "
                         "delete it first or set 'prevent_groups_deletion' parameter to false",
                     )
 
         self.user_repo.remove(username)
-        return Result(value=None)
 
     def update(
         self,
@@ -115,18 +100,17 @@ class UserService:
         user_update: UserUpdate,
         allow_groups_creation: bool = False,
         prevent_groups_deletion: bool = True,
-    ) -> Result[User]:
+    ) -> User:
         user = self.user_repo.find_one(username)
         if not user:
-            return Result(error=ServiceError.USER_NOT_FOUND, error_detail="Given user does not exist")
+            raise ServiceExceptions.UserNotFound("Given user does not exist")
 
         if user_update.groups:
             if not allow_groups_creation:
                 for usergroup in user_update.groups:
                     if not self.group_repo.exists(usergroup.groupname):
-                        return Result(
-                            error=ServiceError.GROUP_NOT_FOUND,
-                            error_detail=f"Given group '{usergroup.groupname}' does not exist: create it first"
+                        raise ServiceExceptions.GroupNotFound(
+                            f"Given group '{usergroup.groupname}' does not exist: "
                             "create it first or set 'allow_groups_creation' parameter to true",
                         )
 
@@ -134,9 +118,8 @@ class UserService:
             for usergroup in user.groups:
                 group = self.group_repo.find_one(usergroup.groupname)
                 if group and not (group.checks or group.replies):
-                    return Result(
-                        error=ServiceError.GROUP_WOULD_BE_DELETED,
-                        error_detail=f"Group '{group.groupname}' would be deleted as it has no attributes: "
+                    raise ServiceExceptions.GroupWouldBeDeleted(
+                        f"Group '{group.groupname}' would be deleted as it has no attributes: "
                         "delete it first or set 'prevent_groups_deletion' parameter to false",
                     )
 
@@ -144,10 +127,7 @@ class UserService:
         new_replies = user.replies if user_update.replies is None else user_update.replies
         new_groups = user.groups if user_update.groups is None else user_update.groups
         if not (new_checks or new_replies or new_groups):
-            return Result(
-                error=ServiceError.USER_WOULD_BE_DELETED,
-                error_detail="Resulting user would have no attributes and no groups",
-            )
+            raise ServiceExceptions.UserWouldBeDeleted("Resulting user would have no attributes and no groups")
 
         self.user_repo.set(
             username=username,
@@ -155,7 +135,7 @@ class UserService:
             new_replies=user_update.replies,
             new_groups=user_update.groups,
         )
-        return Result(value=self.user_repo.find_one(username))
+        return self.user_repo.find_one(username)  # type: ignore
 
 
 class GroupService:
@@ -163,54 +143,50 @@ class GroupService:
         self.group_repo = group_repo
         self.user_repo = user_repo
 
-    def get(self, groupname: str) -> Result[Group]:
+    def get(self, groupname: str) -> Group:
         group = self.group_repo.find_one(groupname)
         if not group:
-            return Result(error=ServiceError.GROUP_NOT_FOUND, error_detail="Given group does not exist")
-        return Result(value=group)
+            raise ServiceExceptions.GroupNotFound("Given group does not exist")
+        return group
 
-    def get_all(self, from_groupname: str | None = None) -> Result[list[Group]]:
-        return Result(value=self.group_repo.find_all(from_groupname))
+    def get_all(self, from_groupname: str | None = None) -> list[Group]:
+        return self.group_repo.find_all(from_groupname)
 
-    def create(self, group: Group, allow_users_creation: bool = False) -> Result[Group]:
+    def create(self, group: Group, allow_users_creation: bool = False) -> Group:
         if self.group_repo.exists(group.groupname):
-            return Result(error=ServiceError.GROUP_ALREADY_EXISTS, error_detail="Given group already exists")
+            raise ServiceExceptions.GroupAlreadyExists("Given group already exists")
 
         if not allow_users_creation:
             for groupuser in group.users:
                 if not self.user_repo.exists(groupuser.username):
-                    return Result(
-                        error=ServiceError.USER_NOT_FOUND,
-                        error_detail=f"Given user '{groupuser.username}' does not exist: "
+                    raise ServiceExceptions.UserNotFound(
+                        f"Given user '{groupuser.username}' does not exist: "
                         "create it first or set 'allow_users_creation' parameter to true",
                     )
 
         self.group_repo.add(group)
-        return Result(value=group)
+        return group
 
-    def delete(self, groupname: str, ignore_users: bool = False, prevent_users_deletion: bool = True) -> Result[None]:
+    def delete(self, groupname: str, ignore_users: bool = False, prevent_users_deletion: bool = True):
         group = self.group_repo.find_one(groupname)
         if not group:
-            return Result(error=ServiceError.GROUP_NOT_FOUND, error_detail="Given group does not exist")
+            raise ServiceExceptions.GroupNotFound("Given group does not exist")
 
         if group.users and not ignore_users:
-            return Result(
-                error=ServiceError.GROUP_HAS_USERS,
-                error_detail="Given group has users: delete them first or set 'ignore_users' parameter to true",
+            raise ServiceExceptions.GroupStillHasUsers(
+                "Given group has users: delete them first or set 'ignore_users' parameter to true"
             )
 
         if prevent_users_deletion:
             for groupuser in group.users:
                 user = self.user_repo.find_one(groupuser.username)
                 if user and not (user.checks or user.replies):
-                    return Result(
-                        error=ServiceError.USER_WOULD_BE_DELETED,
-                        error_detail=f"User '{user.username}' would be deleted as it has no attributes: "
+                    raise ServiceExceptions.UserWouldBeDeleted(
+                        f"User '{user.username}' would be deleted as it has no attributes: "
                         "delete it first or set 'prevent_users_deletion' parameter to false",
                     )
 
         self.group_repo.remove(groupname)
-        return Result(value=None)
 
     def update(
         self,
@@ -218,18 +194,17 @@ class GroupService:
         group_update: GroupUpdate,
         allow_users_creation: bool = False,
         prevent_users_deletion: bool = True,
-    ) -> Result[Group]:
+    ) -> Group:
         group = self.group_repo.find_one(groupname)
         if not group:
-            return Result(error=ServiceError.GROUP_NOT_FOUND, error_detail="Given group does not exist")
+            raise ServiceExceptions.GroupNotFound("Given group does not exist")
 
         if group_update.users:
             if not allow_users_creation:
                 for groupuser in group_update.users:
                     if not self.user_repo.exists(groupuser.username):
-                        return Result(
-                            error=ServiceError.USER_NOT_FOUND,
-                            error_detail=f"Given user '{groupuser.username}' does not exist: create it first"
+                        raise ServiceExceptions.UserNotFound(
+                            f"Given user '{groupuser.username}' does not exist: "
                             "create it first or set 'allow_users_creation' parameter to true",
                         )
 
@@ -237,9 +212,8 @@ class GroupService:
             for groupuser in group.users:
                 user = self.user_repo.find_one(groupuser.username)
                 if user and not (user.checks or user.replies):
-                    return Result(
-                        error=ServiceError.USER_WOULD_BE_DELETED,
-                        error_detail=f"User '{user.username}' would be deleted as it has no attributes: "
+                    raise ServiceExceptions.UserWouldBeDeleted(
+                        f"User '{user.username}' would be deleted as it has no attributes: "
                         "delete it first or set 'prevent_users_deletion' parameter to false",
                     )
 
@@ -247,10 +221,7 @@ class GroupService:
         new_replies = group.replies if group_update.replies is None else group_update.replies
         new_users = group.users if group_update.users is None else group_update.users
         if not (new_checks or new_replies or new_users):
-            return Result(
-                error=ServiceError.GROUP_WOULD_BE_DELETED,
-                error_detail="Resulting group would have no attributes and no users",
-            )
+            raise ServiceExceptions.GroupWouldBeDeleted("Resulting group would have no attributes and no users")
 
         self.group_repo.set(
             groupname=groupname,
@@ -258,37 +229,36 @@ class GroupService:
             new_replies=group_update.replies,
             new_users=group_update.users,
         )
-        return Result(value=self.group_repo.find_one(groupname))
+        return self.group_repo.find_one(groupname)  # type: ignore
 
 
 class NasService:
     def __init__(self, nas_repo: NasRepository):
         self.nas_repo = nas_repo
 
-    def get(self, nasname: str) -> Result[Nas]:
+    def get(self, nasname: str) -> Nas:
         nas = self.nas_repo.find_one(nasname)
         if not nas:
-            return Result(error=ServiceError.NAS_NOT_FOUND, error_detail="Given NAS does not exist")
-        return Result(value=nas)
+            raise ServiceExceptions.NasNotFound("Given NAS does not exist")
+        return nas
 
-    def get_all(self, from_nasname: str | None = None) -> Result[list[Nas]]:
-        return Result(value=self.nas_repo.find_all(from_nasname))
+    def get_all(self, from_nasname: str | None = None) -> list[Nas]:
+        return self.nas_repo.find_all(from_nasname)
 
-    def create(self, nas: Nas) -> Result[Nas]:
+    def create(self, nas: Nas) -> Nas:
         if self.nas_repo.exists(nas.nasname):
-            return Result(error=ServiceError.NAS_ALREADY_EXISTS, error_detail="Given NAS already exists")
+            raise ServiceExceptions.NasAlreadyExists("Given NAS already exists")
         self.nas_repo.add(nas)
-        return Result(value=nas)
+        return nas
 
-    def delete(self, nasname: str) -> Result[None]:
+    def delete(self, nasname: str):
         if not self.nas_repo.exists(nasname):
-            return Result(error=ServiceError.NAS_NOT_FOUND, error_detail="Given NAS does not exist")
+            raise ServiceExceptions.NasNotFound("Given NAS does not exist")
         self.nas_repo.remove(nasname)
-        return Result(value=None)
 
-    def update(self, nasname: str, nas_update: NasUpdate) -> Result[Nas]:
+    def update(self, nasname: str, nas_update: NasUpdate) -> Nas:
         nas = self.nas_repo.find_one(nasname)
         if not nas:
-            return Result(error=ServiceError.NAS_NOT_FOUND, error_detail="Given NAS does not exist")
+            raise ServiceExceptions.NasNotFound("Given NAS does not exist")
         self.nas_repo.set(nasname, new_shortname=nas_update.shortname, new_secret=nas_update.secret)
-        return Result(value=self.nas_repo.find_one(nasname))
+        return self.nas_repo.find_one(nasname)  # type: ignore
