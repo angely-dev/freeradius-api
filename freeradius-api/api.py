@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from dependencies import GroupServiceDep, NasServiceDep, UserServiceDep
 from pyfreeradius.models import Group, Nas, User
-from pyfreeradius.schemas import GroupUpdate, NasUpdate, UserUpdate
+from pyfreeradius.params import GroupUpdate, NasUpdate, UserUpdate
 from pyfreeradius.services import ServiceExceptions
 from settings import API_URL
 

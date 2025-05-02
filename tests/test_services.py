@@ -3,8 +3,8 @@ from pytest import fixture, raises
 
 from database import db_connect
 from pyfreeradius.models import AttributeOpValue, Group, GroupUser, Nas, User, UserGroup
+from pyfreeradius.params import GroupUpdate, NasUpdate, UserUpdate
 from pyfreeradius.repositories import GroupRepository, NasRepository, UserRepository
-from pyfreeradius.schemas import GroupUpdate, NasUpdate, UserUpdate
 from pyfreeradius.services import GroupService, NasService, ServiceExceptions, UserService
 
 #

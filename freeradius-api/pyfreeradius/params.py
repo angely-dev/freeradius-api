@@ -4,6 +4,11 @@ from pydantic import BaseModel, StringConstraints, model_validator
 
 from pyfreeradius.models import AttributeOpValue, GroupUser, UserGroup
 
+#
+# These are "complex" parameters used by update methods in services.
+# They allow partial update (aka PATCH) of a user, a group or a NAS.
+#
+
 
 class UserUpdate(BaseModel):
     checks: list[AttributeOpValue] | None = None

@@ -1,6 +1,6 @@
 from .models import Group, Nas, User
+from .params import GroupUpdate, NasUpdate, UserUpdate
 from .repositories import GroupRepository, NasRepository, UserRepository
-from .schemas import GroupUpdate, NasUpdate, UserUpdate
 
 #
 # All possible domain errors.
