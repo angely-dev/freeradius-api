@@ -76,18 +76,23 @@ group1 = Group(
 
 
 def test_nas(services):
+    # NAS not found yet
+    assert not services.nas.exists(nasname=nas1.nasname)
+    assert services.nas.find_one(nasname=nas1.nasname) is None
+    assert nas1 not in services.nas.find_all(from_nasname="nas1.pyfreeradiu")
     with raises(ServiceExceptions.NasNotFound):
-        # NAS not found yet
         services.nas.get(nasname=nas1.nasname)
-    assert nas1 not in services.nas.find_all(from_nasname="nas1.pyfreeradiu")  # NAS not part of collection yet
 
     services.nas.create(nas=nas1)  # NAS created
     with raises(ServiceExceptions.NasAlreadyExists):
         # NAS already exists
         services.nas.create(nas=nas1)
 
-    assert nas1 == services.nas.get(nasname=nas1.nasname)  # NAS now found
-    assert nas1 in services.nas.find_all(from_nasname="nas1.pyfreeradiu")  # NAS now part of collection
+    # NAS now found
+    assert services.nas.exists(nasname=nas1.nasname)
+    assert nas1 == services.nas.find_one(nasname=nas1.nasname)
+    assert nas1 in services.nas.find_all(from_nasname="nas1.pyfreeradiu")
+    assert nas1 == services.nas.get(nasname=nas1.nasname)
 
     services.nas.delete(nasname=nas1.nasname)  # NAS deleted
     with raises(ServiceExceptions.NasNotFound):
@@ -96,18 +101,23 @@ def test_nas(services):
 
 
 def test_user(services):
+    # user not found yet
+    assert not services.user.exists(username=user1.username)
+    assert services.user.find_one(username=user1.username) is None
+    assert user1 not in services.user.find_all(from_username="user1.pyfreeradiu")
     with raises(ServiceExceptions.UserNotFound):
-        # user not found yet
         services.user.get(username=user1.username)
-    assert user1 not in services.user.find_all(from_username="user1.pyfreeradiu")  # user not part of collection yet
 
     services.user.create(user=user1)  # user created
     with raises(ServiceExceptions.UserAlreadyExists):
         # user already exists
         services.user.create(user=user1)
 
-    assert user1 == services.user.get(username=user1.username)  # user now found
-    assert user1 in services.user.find_all(from_username="user1.pyfreeradiu")  # user now part of collection
+    # user now found
+    assert services.user.exists(username=user1.username)
+    assert user1 == services.user.find_one(username=user1.username)
+    assert user1 in services.user.find_all(from_username="user1.pyfreeradiu")
+    assert user1 == services.user.get(username=user1.username)
 
     services.user.delete(username=user1.username)  # user deleted
     with raises(ServiceExceptions.UserNotFound):
@@ -116,20 +126,23 @@ def test_user(services):
 
 
 def test_group(services):
+    # group not found yet
+    assert not services.group.exists(groupname=group1.groupname)
+    assert services.group.find_one(groupname=group1.groupname) is None
+    assert group1 not in services.group.find_all(from_groupname="group1.pyfreeradiu")
     with raises(ServiceExceptions.GroupNotFound):
-        # group not found yet
         services.group.get(groupname=group1.groupname)
-    assert group1 not in services.group.find_all(
-        from_groupname="group1.pyfreeradiu"
-    )  # group not part of collection yet
 
     services.group.create(group=group1)  # group created
     with raises(ServiceExceptions.GroupAlreadyExists):
         # group already exists
         services.group.create(group=group1)
 
-    assert group1 == services.group.get(groupname=group1.groupname)  # group now found
-    assert group1 in services.group.find_all(from_groupname="group1.pyfreeradiu")  # group now part of collection
+    # group now found
+    assert services.group.exists(groupname=group1.groupname)
+    assert group1 == services.group.find_one(groupname=group1.groupname)
+    assert group1 in services.group.find_all(from_groupname="group1.pyfreeradiu")
+    assert group1 == services.group.get(groupname=group1.groupname)
 
     services.group.delete(groupname=group1.groupname)  # group deleted
     with raises(ServiceExceptions.GroupNotFound):

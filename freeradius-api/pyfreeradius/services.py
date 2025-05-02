@@ -54,14 +54,20 @@ class UserService:
         self.user_repo = user_repo
         self.group_repo = group_repo
 
+    def exists(self, username: str) -> bool:
+        return self.user_repo.exists(username)
+
+    def find_one(self, username: str) -> User | None:
+        return self.user_repo.find_one(username)
+
+    def find_all(self, from_username: str | None = None) -> list[User]:
+        return self.user_repo.find_all(from_username)
+
     def get(self, username: str) -> User:
         user = self.user_repo.find_one(username)
         if not user:
             raise ServiceExceptions.UserNotFound("Given user does not exist")
         return user
-
-    def find_all(self, from_username: str | None = None) -> list[User]:
-        return self.user_repo.find_all(from_username)
 
     def create(self, user: User, allow_groups_creation: bool = False) -> User:
         if self.user_repo.exists(user.username):
@@ -143,14 +149,20 @@ class GroupService:
         self.group_repo = group_repo
         self.user_repo = user_repo
 
+    def exists(self, groupname: str) -> bool:
+        return self.group_repo.exists(groupname)
+
+    def find_one(self, groupname: str) -> Group | None:
+        return self.group_repo.find_one(groupname)
+
+    def find_all(self, from_groupname: str | None = None) -> list[Group]:
+        return self.group_repo.find_all(from_groupname)
+
     def get(self, groupname: str) -> Group:
         group = self.group_repo.find_one(groupname)
         if not group:
             raise ServiceExceptions.GroupNotFound("Given group does not exist")
         return group
-
-    def find_all(self, from_groupname: str | None = None) -> list[Group]:
-        return self.group_repo.find_all(from_groupname)
 
     def create(self, group: Group, allow_users_creation: bool = False) -> Group:
         if self.group_repo.exists(group.groupname):
@@ -236,14 +248,20 @@ class NasService:
     def __init__(self, nas_repo: NasRepository):
         self.nas_repo = nas_repo
 
+    def exists(self, nasname: str) -> bool:
+        return self.nas_repo.exists(nasname)
+
+    def find_one(self, nasname: str) -> Nas | None:
+        return self.nas_repo.find_one(nasname)
+
+    def find_all(self, from_nasname: str | None = None) -> list[Nas]:
+        return self.nas_repo.find_all(from_nasname)
+
     def get(self, nasname: str) -> Nas:
         nas = self.nas_repo.find_one(nasname)
         if not nas:
             raise ServiceExceptions.NasNotFound("Given NAS does not exist")
         return nas
-
-    def find_all(self, from_nasname: str | None = None) -> list[Nas]:
-        return self.nas_repo.find_all(from_nasname)
 
     def create(self, nas: Nas) -> Nas:
         if self.nas_repo.exists(nas.nasname):
