@@ -5,7 +5,7 @@ from database import db_connect
 from pyfreeradius.models import AttributeOpValue, Group, GroupUser, Nas, User, UserGroup
 from pyfreeradius.repositories import GroupRepository, NasRepository, UserRepository
 from pyfreeradius.schemas import GroupUpdate, NasUpdate, UserUpdate
-from pyfreeradius.services import ErrorType, GroupService, NasService, Result, UserService
+from pyfreeradius.services import GroupService, NasService, Result, ServiceError, UserService
 
 #
 # Each test will depend on services instance.
@@ -78,7 +78,7 @@ group1 = Group(
 def test_nas(services):
     result = services.nas.get(nasname=nas1.nasname)
     assert result.is_failure()
-    assert result.error_type == ErrorType.NAS_NOT_FOUND  # NAS not found yet
+    assert result.error == ServiceError.NAS_NOT_FOUND  # NAS not found yet
 
     result = services.nas.get_all(from_nasname="nas1.pyfreeradiu")
     assert result.is_success()
@@ -90,7 +90,7 @@ def test_nas(services):
 
     result = services.nas.create(nas=nas1)
     assert result.is_failure()
-    assert result.error_type == ErrorType.NAS_ALREADY_EXISTS  # NAS already exists
+    assert result.error == ServiceError.NAS_ALREADY_EXISTS  # NAS already exists
 
     result = services.nas.get(nasname=nas1.nasname)
     assert result.is_success()
@@ -106,13 +106,13 @@ def test_nas(services):
 
     result = services.nas.delete(nasname=nas1.nasname)
     assert result.is_failure()
-    assert result.error_type == ErrorType.NAS_NOT_FOUND  # NAS now not found
+    assert result.error == ServiceError.NAS_NOT_FOUND  # NAS now not found
 
 
 def test_user(services):
     result = services.user.get(username=user1.username)
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_NOT_FOUND  # user not found yet
+    assert result.error == ServiceError.USER_NOT_FOUND  # user not found yet
 
     result = services.user.get_all(from_username="user1.pyfreeradiu")
     assert result.is_success()
@@ -124,7 +124,7 @@ def test_user(services):
 
     result = services.user.create(user=user1)
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_ALREADY_EXISTS  # user already exists
+    assert result.error == ServiceError.USER_ALREADY_EXISTS  # user already exists
 
     result = services.user.get(username=user1.username)
     assert result.is_success()
@@ -140,13 +140,13 @@ def test_user(services):
 
     result = services.user.delete(username=user1.username)
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_NOT_FOUND  # user now not found
+    assert result.error == ServiceError.USER_NOT_FOUND  # user now not found
 
 
 def test_group(services):
     result = services.group.get(groupname=group1.groupname)
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_NOT_FOUND  # group not found yet
+    assert result.error == ServiceError.GROUP_NOT_FOUND  # group not found yet
 
     result = services.group.get_all(from_groupname="group1.pyfreeradiu")
     assert result.is_success()
@@ -158,7 +158,7 @@ def test_group(services):
 
     result = services.group.create(group=group1)
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_ALREADY_EXISTS  # group already exists
+    assert result.error == ServiceError.GROUP_ALREADY_EXISTS  # group already exists
 
     result = services.group.get(groupname=group1.groupname)
     assert result.is_success()
@@ -174,7 +174,7 @@ def test_group(services):
 
     result = services.group.delete(groupname=group1.groupname)
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_NOT_FOUND  # group now not found
+    assert result.error == ServiceError.GROUP_NOT_FOUND  # group now not found
 
 
 def test_user_with_groups(services):
@@ -192,7 +192,7 @@ def test_user_with_groups(services):
 
     result = services.user.create(user=user_with_groups)
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_NOT_FOUND  # group2 not found
+    assert result.error == ServiceError.GROUP_NOT_FOUND  # group2 not found
 
     result = services.user.create(user=user_with_groups, allow_groups_creation=True)
     assert result.is_success()
@@ -204,7 +204,7 @@ def test_user_with_groups(services):
     result = services.user.delete(username=user_with_groups.username)
     assert result.is_failure()
     assert (
-        result.error_type == ErrorType.GROUP_WOULD_BE_DELETED
+        result.error == ServiceError.GROUP_WOULD_BE_DELETED
     )  # group2 would be deleted as it has no attributes but only users
 
     result = services.user.delete(username=user_with_groups.username, prevent_groups_deletion=False)
@@ -213,7 +213,7 @@ def test_user_with_groups(services):
 
     result = services.group.get(groupname=user_with_groups.groups[1].groupname)
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_NOT_FOUND  # group2 now not found
+    assert result.error == ServiceError.GROUP_NOT_FOUND  # group2 now not found
 
     result = services.group.delete(groupname=group1.groupname)
     assert result.is_success()  # group1 deleted
@@ -234,7 +234,7 @@ def test_group_with_users(services):
 
     result = services.group.create(group=group_with_users)
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_NOT_FOUND  # user2 not found
+    assert result.error == ServiceError.USER_NOT_FOUND  # user2 not found
 
     result = services.group.create(group=group_with_users, allow_users_creation=True)
     assert result.is_success()
@@ -245,12 +245,12 @@ def test_group_with_users(services):
 
     result = services.group.delete(groupname=group_with_users.groupname)
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_HAS_USERS  # group still has users
+    assert result.error == ServiceError.GROUP_HAS_USERS  # group still has users
 
     result = services.group.delete(groupname=group_with_users.groupname, ignore_users=True)
     assert result.is_failure()
     assert (
-        result.error_type == ErrorType.USER_WOULD_BE_DELETED
+        result.error == ServiceError.USER_WOULD_BE_DELETED
     )  # user2 would be deleted as it has no attributes but only groups
 
     result = services.group.delete(
@@ -261,7 +261,7 @@ def test_group_with_users(services):
 
     result = services.user.get(username=group_with_users.users[1].username)
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_NOT_FOUND  # user2 now not found
+    assert result.error == ServiceError.USER_NOT_FOUND  # user2 now not found
 
     result = services.user.delete(username=user1.username)
     assert result.is_success()  # user1 deleted
@@ -309,7 +309,7 @@ def test_user_update(services):
 
     result = services.user.update(username=user1.username, user_update=UserUpdate(checks=[]))
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_WOULD_BE_DELETED
+    assert result.error == ServiceError.USER_WOULD_BE_DELETED
 
     # the user will have only reply attributes
 
@@ -321,7 +321,7 @@ def test_user_update(services):
 
     result = services.user.update(username=user1.username, user_update=UserUpdate(replies=[]))
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_WOULD_BE_DELETED
+    assert result.error == ServiceError.USER_WOULD_BE_DELETED
 
     # the user will have only groups
 
@@ -329,7 +329,7 @@ def test_user_update(services):
 
     result = services.user.update(username=user1.username, user_update=user_update)
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_NOT_FOUND
+    assert result.error == ServiceError.GROUP_NOT_FOUND
 
     result = services.user.update(username=user1.username, user_update=user_update, allow_groups_creation=True)
     assert result.is_success()
@@ -337,13 +337,13 @@ def test_user_update(services):
 
     result = services.user.update(username=user1.username, user_update=UserUpdate(groups=[]))
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_WOULD_BE_DELETED
+    assert result.error == ServiceError.GROUP_WOULD_BE_DELETED
 
     result = services.user.update(
         username=user1.username, user_update=UserUpdate(groups=[]), prevent_groups_deletion=False
     )
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_WOULD_BE_DELETED
+    assert result.error == ServiceError.USER_WOULD_BE_DELETED
 
     # delete user
 
@@ -376,7 +376,7 @@ def test_group_update(services):
 
     result = services.group.update(groupname=group1.groupname, group_update=GroupUpdate(checks=[]))
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_WOULD_BE_DELETED
+    assert result.error == ServiceError.GROUP_WOULD_BE_DELETED
 
     # the group will have only reply attributes
 
@@ -388,7 +388,7 @@ def test_group_update(services):
 
     result = services.group.update(groupname=group1.groupname, group_update=GroupUpdate(replies=[]))
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_WOULD_BE_DELETED
+    assert result.error == ServiceError.GROUP_WOULD_BE_DELETED
 
     # the group will have only users
 
@@ -396,7 +396,7 @@ def test_group_update(services):
 
     result = services.group.update(groupname=group1.groupname, group_update=group_update)
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_NOT_FOUND
+    assert result.error == ServiceError.USER_NOT_FOUND
 
     result = services.group.update(groupname=group1.groupname, group_update=group_update, allow_users_creation=True)
     assert result.is_success()
@@ -404,13 +404,13 @@ def test_group_update(services):
 
     result = services.group.update(groupname=group1.groupname, group_update=GroupUpdate(users=[]))
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_WOULD_BE_DELETED
+    assert result.error == ServiceError.USER_WOULD_BE_DELETED
 
     result = services.group.update(
         groupname=group1.groupname, group_update=GroupUpdate(users=[]), prevent_users_deletion=False
     )
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_WOULD_BE_DELETED
+    assert result.error == ServiceError.GROUP_WOULD_BE_DELETED
 
     # delete group
 
@@ -421,19 +421,19 @@ def test_group_update(services):
 def test_nas_update_nonexistent(services):
     result = services.nas.update(nasname="nonexistent-nas", nas_update=NasUpdate())
     assert result.is_failure()
-    assert result.error_type == ErrorType.NAS_NOT_FOUND
+    assert result.error == ServiceError.NAS_NOT_FOUND
 
 
 def test_user_update_nonexistent(services):
     result = services.user.update(username="nonexistent-user", user_update=UserUpdate())
     assert result.is_failure()
-    assert result.error_type == ErrorType.USER_NOT_FOUND
+    assert result.error == ServiceError.USER_NOT_FOUND
 
 
 def test_group_update_nonexistent(services):
     result = services.group.update(groupname="nonexistent-group", group_update=GroupUpdate())
     assert result.is_failure()
-    assert result.error_type == ErrorType.GROUP_NOT_FOUND
+    assert result.error == ServiceError.GROUP_NOT_FOUND
 
 
 def test_user_update_validation_error():
@@ -456,8 +456,8 @@ def test_group_update_validation_error():
 
 def test_result_validation_error():
     with raises(ValidationError):
-        # 'error_type' must be provided if 'error_info' is set
-        Result(error_info="some info")
+        # 'error' must be provided if 'error_detail' is set
+        Result(error_detail="some info")
     with raises(ValidationError):
-        # 'value' must not be provided if 'error_type' is set
-        Result(error_type=ErrorType.USER_NOT_FOUND, value="some value")
+        # 'value' must not be provided if 'error' is set
+        Result(error=ServiceError.USER_NOT_FOUND, value="some value")

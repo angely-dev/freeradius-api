@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from dependencies import GroupServiceDep, NasServiceDep, UserServiceDep
 from pyfreeradius.models import Group, Nas, User
 from pyfreeradius.schemas import GroupUpdate, NasUpdate, UserUpdate
-from pyfreeradius.services import ErrorType
+from pyfreeradius.services import ServiceError
 from settings import API_URL
 
 
@@ -57,24 +57,24 @@ def get_groups(group_service: GroupServiceDep, response: Response, from_groupnam
 @router.get("/nas/{nasname}", tags=["nas"], status_code=200, response_model=Nas, responses={404: error_404})
 def get_nas(nasname: str, nas_service: NasServiceDep):
     result = nas_service.get(nasname)
-    if result.error_type == ErrorType.NAS_NOT_FOUND:
-        raise HTTPException(404, result.error_info)
+    if result.error == ServiceError.NAS_NOT_FOUND:
+        raise HTTPException(404, result.error_detail)
     return result.value
 
 
 @router.get("/users/{username}", tags=["users"], status_code=200, response_model=User, responses={404: error_404})
 def get_user(username: str, user_service: UserServiceDep):
     result = user_service.get(username)
-    if result.error_type == ErrorType.USER_NOT_FOUND:
-        raise HTTPException(404, result.error_info)
+    if result.error == ServiceError.USER_NOT_FOUND:
+        raise HTTPException(404, result.error_detail)
     return result.value
 
 
 @router.get("/groups/{groupname}", tags=["groups"], status_code=200, response_model=Group, responses={404: error_404})
 def get_group(groupname: str, group_service: GroupServiceDep):
     result = group_service.get(groupname)
-    if result.error_type == ErrorType.GROUP_NOT_FOUND:
-        raise HTTPException(404, result.error_info)
+    if result.error == ServiceError.GROUP_NOT_FOUND:
+        raise HTTPException(404, result.error_detail)
     return result.value
 
 
@@ -82,8 +82,8 @@ def get_group(groupname: str, group_service: GroupServiceDep):
 def post_nas(nas: Nas, nas_service: NasServiceDep, response: Response):
     result = nas_service.create(nas)
 
-    if result.error_type == ErrorType.NAS_ALREADY_EXISTS:
-        raise HTTPException(409, result.error_info)
+    if result.error == ServiceError.NAS_ALREADY_EXISTS:
+        raise HTTPException(409, result.error_detail)
 
     response.headers["Location"] = f"{API_URL}/nas/{nas.nasname}"
     return nas
@@ -100,10 +100,10 @@ def post_user(
 ):
     result = user_service.create(user=user, allow_groups_creation=allow_groups_creation)
 
-    if result.error_type == ErrorType.USER_ALREADY_EXISTS:
-        raise HTTPException(409, result.error_info)
-    if result.error_type == ErrorType.GROUP_NOT_FOUND:
-        raise HTTPException(422, result.error_info)
+    if result.error == ServiceError.USER_ALREADY_EXISTS:
+        raise HTTPException(409, result.error_detail)
+    if result.error == ServiceError.GROUP_NOT_FOUND:
+        raise HTTPException(422, result.error_detail)
 
     response.headers["Location"] = f"{API_URL}/users/{user.username}"
     return result.value
@@ -120,10 +120,10 @@ def post_group(
 ):
     result = group_service.create(group=group, allow_users_creation=allow_users_creation)
 
-    if result.error_type == ErrorType.GROUP_ALREADY_EXISTS:
-        raise HTTPException(409, result.error_info)
-    if result.error_type == ErrorType.USER_NOT_FOUND:
-        raise HTTPException(422, result.error_info)
+    if result.error == ServiceError.GROUP_ALREADY_EXISTS:
+        raise HTTPException(409, result.error_detail)
+    if result.error == ServiceError.USER_NOT_FOUND:
+        raise HTTPException(422, result.error_detail)
 
     response.headers["Location"] = f"{API_URL}/groups/{group.groupname}"
     return result.value
@@ -133,8 +133,8 @@ def post_group(
 def delete_nas(nasname: str, nas_service: NasServiceDep):
     result = nas_service.delete(nasname)
 
-    if result.error_type == ErrorType.NAS_NOT_FOUND:
-        raise HTTPException(404, result.error_info)
+    if result.error == ServiceError.NAS_NOT_FOUND:
+        raise HTTPException(404, result.error_detail)
 
 
 @router.delete("/users/{username}", tags=["users"], status_code=204, responses={404: error_404})
@@ -147,10 +147,10 @@ def delete_user(
 ):
     result = user_service.delete(username=username, prevent_groups_deletion=prevent_groups_deletion)
 
-    if result.error_type == ErrorType.USER_NOT_FOUND:
-        raise HTTPException(404, result.error_info)
-    if result.error_type == ErrorType.GROUP_WOULD_BE_DELETED:
-        raise HTTPException(422, result.error_info)
+    if result.error == ServiceError.USER_NOT_FOUND:
+        raise HTTPException(404, result.error_detail)
+    if result.error == ServiceError.GROUP_WOULD_BE_DELETED:
+        raise HTTPException(422, result.error_detail)
 
 
 @router.delete("/groups/{groupname}", tags=["groups"], status_code=204, responses={404: error_404})
@@ -168,18 +168,18 @@ def delete_group(
         groupname=groupname, ignore_users=ignore_users, prevent_users_deletion=prevent_users_deletion
     )
 
-    if result.error_type == ErrorType.GROUP_NOT_FOUND:
-        raise HTTPException(404, result.error_info)
-    if result.error_type in [ErrorType.GROUP_HAS_USERS, ErrorType.USER_WOULD_BE_DELETED]:
-        raise HTTPException(422, result.error_info)
+    if result.error == ServiceError.GROUP_NOT_FOUND:
+        raise HTTPException(404, result.error_detail)
+    if result.error in [ServiceError.GROUP_HAS_USERS, ServiceError.USER_WOULD_BE_DELETED]:
+        raise HTTPException(422, result.error_detail)
 
 
 @router.patch("/nas/{nasname}", tags=["nas"], status_code=200, response_model=Nas, responses={404: error_404})
 def patch_nas(nasname: str, nas_update: NasUpdate, nas_service: NasServiceDep, response: Response):
     result = nas_service.update(nasname=nasname, nas_update=nas_update)
 
-    if result.error_type == ErrorType.NAS_NOT_FOUND:
-        raise HTTPException(404, result.error_info)
+    if result.error == ServiceError.NAS_NOT_FOUND:
+        raise HTTPException(404, result.error_detail)
 
     response.headers["Location"] = f"{API_URL}/nas/{nasname}"
     return result.value
@@ -205,14 +205,14 @@ def patch_user(
         prevent_groups_deletion=prevent_groups_deletion,
     )
 
-    if result.error_type == ErrorType.USER_NOT_FOUND:
-        raise HTTPException(404, result.error_info)
-    if result.error_type in [
-        ErrorType.GROUP_NOT_FOUND,
-        ErrorType.GROUP_WOULD_BE_DELETED,
-        ErrorType.USER_WOULD_BE_DELETED,
+    if result.error == ServiceError.USER_NOT_FOUND:
+        raise HTTPException(404, result.error_detail)
+    if result.error in [
+        ServiceError.GROUP_NOT_FOUND,
+        ServiceError.GROUP_WOULD_BE_DELETED,
+        ServiceError.USER_WOULD_BE_DELETED,
     ]:
-        raise HTTPException(422, result.error_info)
+        raise HTTPException(422, result.error_detail)
 
     response.headers["Location"] = f"{API_URL}/users/{username}"
     return result.value
@@ -238,14 +238,14 @@ def patch_group(
         prevent_users_deletion=prevent_users_deletion,
     )
 
-    if result.error_type == ErrorType.GROUP_NOT_FOUND:
-        raise HTTPException(404, result.error_info)
-    if result.error_type in [
-        ErrorType.USER_NOT_FOUND,
-        ErrorType.USER_WOULD_BE_DELETED,
-        ErrorType.GROUP_WOULD_BE_DELETED,
+    if result.error == ServiceError.GROUP_NOT_FOUND:
+        raise HTTPException(404, result.error_detail)
+    if result.error in [
+        ServiceError.USER_NOT_FOUND,
+        ServiceError.USER_WOULD_BE_DELETED,
+        ServiceError.GROUP_WOULD_BE_DELETED,
     ]:
-        raise HTTPException(422, result.error_info)
+        raise HTTPException(422, result.error_detail)
 
     response.headers["Location"] = f"{API_URL}/groups/{groupname}"
     return result.value
