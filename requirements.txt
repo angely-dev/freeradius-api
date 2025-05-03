@@ -1,4 +1,6 @@
+fastapi
 pyfreeradius
+uvicorn
 
 # Uncomment the appropriate line to load the DB-API 2.0 (PEP 249) enabled driver
 mysql-connector-python
@@ -8,7 +10,3 @@ mysql-connector-python
 #sqllite3
 #oracledb
 #<DRIVER>
-
-# For FastAPI app
-fastapi
-uvicorn
