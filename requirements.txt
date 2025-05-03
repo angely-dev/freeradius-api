@@ -1,4 +1,3 @@
-pydantic
 pyfreeradius
 
 # Uncomment the appropriate line to load the DB-API 2.0 (PEP 249) enabled driver

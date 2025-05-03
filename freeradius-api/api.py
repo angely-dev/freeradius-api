@@ -1,7 +1,7 @@
+from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import APIRouter, FastAPI, HTTPException, Query, Response
-from pydantic import BaseModel
 from pyfreeradius.models import Group, Nas, User
 from pyfreeradius.params import GroupUpdate, NasUpdate, UserUpdate
 from pyfreeradius.services import ServiceExceptions
@@ -11,7 +11,8 @@ from settings import API_URL
 
 
 # Error model and responses
-class RadAPIError(BaseModel):
+@dataclass
+class RadAPIError:
     detail: str
 
 
