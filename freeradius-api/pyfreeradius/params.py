@@ -38,6 +38,7 @@ class UserUpdate(BaseModel):
 
     model_config = {
         "extra": "forbid",
+        "validate_assignment": True,
         "json_schema_extra": {
             "examples": [
                 {"checks": [AttributeOpValue(attribute="Cleartext-Password", op=":=", value="new-pass").model_dump()]}
@@ -74,6 +75,7 @@ class GroupUpdate(BaseModel):
 
     model_config = {
         "extra": "forbid",
+        "validate_assignment": True,
         "json_schema_extra": {
             "examples": [
                 {
@@ -90,5 +92,6 @@ class NasUpdate(BaseModel):
 
     model_config = {
         "extra": "forbid",
+        "validate_assignment": True,
         "json_schema_extra": {"examples": [{"shortname": "new-shortname", "secret": "new-secret"}]},
     }
