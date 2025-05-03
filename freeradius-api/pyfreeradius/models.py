@@ -16,21 +16,30 @@ class AttributeOpValue(BaseModel):
     op: Annotated[str, StringConstraints(min_length=1)]
     value: Annotated[str, StringConstraints(min_length=1)]
 
-    model_config = {"extra": "forbid"}
+    model_config = {
+        "extra": "forbid",
+        "validate_assignment": True,
+    }
 
 
 class UserGroup(BaseModel):
     groupname: Annotated[str, StringConstraints(min_length=1)]
     priority: Annotated[int, Field(ge=1)] = 1
 
-    model_config = {"extra": "forbid"}
+    model_config = {
+        "extra": "forbid",
+        "validate_assignment": True,
+    }
 
 
 class GroupUser(BaseModel):
     username: Annotated[str, StringConstraints(min_length=1)]
     priority: Annotated[int, Field(ge=1)] = 1
 
-    model_config = {"extra": "forbid"}
+    model_config = {
+        "extra": "forbid",
+        "validate_assignment": True,
+    }
 
 
 class User(BaseModel):
@@ -54,6 +63,7 @@ class User(BaseModel):
 
     model_config = {
         "extra": "forbid",
+        "validate_assignment": True,
         "json_schema_extra": {
             "examples": [
                 {
@@ -93,6 +103,7 @@ class Group(BaseModel):
 
     model_config = {
         "extra": "forbid",
+        "validate_assignment": True,
         "json_schema_extra": {
             "examples": [
                 {
@@ -111,5 +122,6 @@ class Nas(BaseModel):
 
     model_config = {
         "extra": "forbid",
+        "validate_assignment": True,
         "json_schema_extra": {"examples": [{"nasname": "5.5.5.5", "shortname": "my-nas", "secret": "my-secret"}]},
     }
