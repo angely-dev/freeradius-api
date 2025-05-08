@@ -1,4 +1,4 @@
-from pyfreeradius.repositories import RepositorySettings
+from pyfreeradius import RadTables
 
 # Uncomment the appropriate line matching your DB-API 2.0 (PEP 249) enabled driver
 DB_DRIVER = "mysql.connector"
@@ -16,10 +16,8 @@ DB_PASS = "radpass"
 DB_HOST = "mydb"
 
 # Database table settings
-REPO_SETTINGS = RepositorySettings(
-    # number of results per page for pagination
-    items_per_page=100,
-    # table names
+ITEMS_PER_PAGE = 100
+RAD_TABLES = RadTables(
     radcheck="radcheck",
     radreply="radreply",
     radgroupcheck="radgroupcheck",

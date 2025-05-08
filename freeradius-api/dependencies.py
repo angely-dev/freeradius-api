@@ -5,7 +5,7 @@ from pyfreeradius.repositories import GroupRepository, NasRepository, UserReposi
 from pyfreeradius.services import GroupService, NasService, UserService
 
 from database import db_connect
-from settings import REPO_SETTINGS
+from settings import RAD_TABLES
 
 #
 # Here we use FastAPI Dependency Injection system.
@@ -37,20 +37,20 @@ def get_db_session():
 
 def get_user_service(db_session=Depends(get_db_session)) -> UserService:
     return UserService(
-        user_repo=UserRepository(db_session, REPO_SETTINGS),
-        group_repo=GroupRepository(db_session, REPO_SETTINGS),
+        user_repo=UserRepository(db_session, RAD_TABLES),
+        group_repo=GroupRepository(db_session, RAD_TABLES),
     )
 
 
 def get_group_service(db_session=Depends(get_db_session)) -> GroupService:
     return GroupService(
-        group_repo=GroupRepository(db_session, REPO_SETTINGS),
-        user_repo=UserRepository(db_session, REPO_SETTINGS),
+        group_repo=GroupRepository(db_session, RAD_TABLES),
+        user_repo=UserRepository(db_session, RAD_TABLES),
     )
 
 
 def get_nas_service(db_session=Depends(get_db_session)) -> NasService:
-    return NasService(nas_repo=NasRepository(db_session, REPO_SETTINGS))
+    return NasService(nas_repo=NasRepository(db_session, RAD_TABLES))
 
 
 # API routes will depend on the services

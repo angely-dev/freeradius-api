@@ -7,7 +7,7 @@ from pyfreeradius.params import GroupUpdate, NasUpdate, UserUpdate
 from pyfreeradius.services import ServiceExceptions
 
 from dependencies import GroupServiceDep, NasServiceDep, UserServiceDep
-from settings import API_URL
+from settings import API_URL, ITEMS_PER_PAGE
 
 
 # Error model and responses
@@ -29,29 +29,29 @@ def read_root():
 
 
 @router.get("/nas", tags=["nas"], status_code=200, response_model=list[Nas])
-def get_nases(nas_service: NasServiceDep, response: Response, from_nasname: str | None = None):
-    nas = nas_service.find_all(from_nasname)
+def get_nases(nas_service: NasServiceDep, response: Response, nasname_gt: str | None = None):
+    nas = nas_service.find(limit=ITEMS_PER_PAGE, nasname_gt=nasname_gt)
     if nas:
         last_nasname = nas[-1].nasname
-        response.headers["Link"] = f'<{API_URL}/nas?from_nasname={last_nasname}>; rel="next"'
+        response.headers["Link"] = f'<{API_URL}/nas?nasname_gt={last_nasname}>; rel="next"'
     return nas
 
 
 @router.get("/users", tags=["users"], status_code=200, response_model=list[User])
-def get_users(user_service: UserServiceDep, response: Response, from_username: str | None = None):
-    users = user_service.find_all(from_username)
+def get_users(user_service: UserServiceDep, response: Response, username_gt: str | None = None):
+    users = user_service.find(limit=ITEMS_PER_PAGE, username_gt=username_gt)
     if users:
         last_username = users[-1].username
-        response.headers["Link"] = f'<{API_URL}/users?from_username={last_username}>; rel="next"'
+        response.headers["Link"] = f'<{API_URL}/users?username_gt={last_username}>; rel="next"'
     return users
 
 
 @router.get("/groups", tags=["groups"], status_code=200, response_model=list[Group])
-def get_groups(group_service: GroupServiceDep, response: Response, from_groupname: str | None = None):
-    groups = group_service.find_all(from_groupname)
+def get_groups(group_service: GroupServiceDep, response: Response, groupname_gt: str | None = None):
+    groups = group_service.find(limit=ITEMS_PER_PAGE, groupname_gt=groupname_gt)
     if groups:
         last_groupname = groups[-1].groupname
-        response.headers["Link"] = f'<{API_URL}/groups?from_groupname={last_groupname}>; rel="next"'
+        response.headers["Link"] = f'<{API_URL}/groups?groupname_gt={last_groupname}>; rel="next"'
     return groups
 
 
