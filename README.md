@@ -3,7 +3,7 @@
 
 ---
 
-_Doc is about to be updated! I made a lot of changes recently (namely `PATCH` endpoints and services layer) and the [pyfreeradius](https://github.com/angely-dev/pyfreeradius) is now published as a separate public package!_
+_Doc is about to be updated and many sections may be obsolete! I made a lot of changes recently (namely `PATCH` endpoints and services layer) and the [pyfreeradius](https://github.com/angely-dev/pyfreeradius) is now published as a [separate public package](https://pypi.org/project/pyfreeradius/)!_
 
 ---
 
