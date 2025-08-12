@@ -24,7 +24,7 @@ A Python REST API on top of the FreeRADIUS database for automation purposes.
 
 It relies on [pyfreeradius](https://github.com/angely-dev/pyfreeradius) package which was originally embedded in this project.
 
-> I recommend to read the docs of `pyfreeradius`, since this project is now essentially a wrapper.
+> I recommend to read the docs of `pyfreeradius` since this project is now essentially a wrapper.
 
 <img width="1292" height="1008" alt="476616451-ec229626-dff5-43ce-869b-0602b2454c56" src="https://github.com/user-attachments/assets/3ef759fa-551a-4572-ba5f-c10692ce791c" />
 
@@ -205,6 +205,14 @@ curl -X 'POST' \
 
 ## Patch a NAS, a user or a group
 
+The update strategy follows [RFC 7396](https://datatracker.ietf.org/doc/html/rfc7396) (JSON Merge Patch) guidelines:
+
+* omitted fields during the update are not modified
+* `None` value means removal (i.e., resets a field to its default value)
+* **a list field can only be overwritten (replaced)**
+
+As a consequence of the last point, to add attributes to an existing user (or a group), you must fetch the existing attributes first, combine them with the new ones, and send the result as the update parameter.
+
 ```sh
 curl -X 'PATCH' \
   'http://localhost:8000/nas/5.5.5.5' \
@@ -259,7 +267,7 @@ curl -X 'DELETE' http://localhost:8000/groups/300m
 #> 204 No Content
 ```
 
-**Reminder:**
+Reminder:
 
 * When a user is deleted, so are its attributes and its belonging to groups ([read more](https://github.com/angely-dev/pyfreeradius#delete-a-user))
 * When a group is deleted, so are its attributes and its belonging to users ([read more](https://github.com/angely-dev/pyfreeradius#delete-a-group))
