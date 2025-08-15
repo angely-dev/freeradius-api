@@ -1,12 +1,6 @@
 [![python](https://img.shields.io/badge/python-3.10+-success.svg)](https://devguide.python.org/versions)
 [![license](https://img.shields.io/badge/license-MIT-success.svg)](https://opensource.org/licenses/MIT)
 
----
-
-_Doc is about to be completed! I made some changes recently (namely `PATCH` endpoints and services layer) and [pyfreeradius](https://github.com/angely-dev/pyfreeradius) is now published as a [separate public package](https://pypi.org/project/pyfreeradius/)._
-
----
-
 * [What is this project?](#what-is-this-project)
 * [Quick demo](#quick-demo)
 * [HOWTO](#howto)
