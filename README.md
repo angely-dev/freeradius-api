@@ -333,49 +333,35 @@ mysql-connector-python
 pip install -r requirements.txt
 ```
 
-* Edit [`src/settings.py`](https://github.com/angely-dev/freeradius-api/blob/master/freeradius-api/settings.py) to set your DB settings (driver, connection and table names):
+* Configure environment variables by copying and editing the `.env.example` file:
 
-```py
-# Uncomment the appropriate line matching the DB-API 2.0 (PEP 249) compliant driver to use
-DB_DRIVER = "mysql.connector"
-#DB_DRIVER = "psycopg"
-#DB_DRIVER = "psycopg2"
-#DB_DRIVER = "pymysql"
-#DB_DRIVER = "pysqlite3"
-#DB_DRIVER = "sqlite3"
-
-# Database connection settings
-DB_NAME = "raddb"
-DB_USER = "raduser"
-DB_PASS = "radpass"
-DB_HOST = "mydb"
-
-# Database table names
-RAD_TABLES = RadTables(
-    radcheck="radcheck",
-    radreply="radreply",
-    radgroupcheck="radgroupcheck",
-    radgroupreply="radgroupreply",
-    radusergroup="radusergroup",
-    nas="nas",
-)
+```bash
+cp .env.example .env
+# Edit .env with your database and API settings
 ```
 
-* You can also customize the number of results per page:
+Or set environment variables directly:
 
-```py
-# Number of results per page for pagination
-ITEMS_PER_PAGE = 100
+```bash
+export DB_DRIVER="mysql.connector"
+export DB_NAME="raddb"
+export DB_USER="raduser"
+export DB_PASS="radpass"
+export DB_HOST="mydb"
+export API_URL="http://localhost:8000"
+export ITEMS_PER_PAGE="100"
 ```
 
-* Finally, you may want to configure the API URL (especially in production):
-
-```py
-# API_URL will be used to set the "Location" header field
-# after a resource has been created (POST) as per RFC 7231
-# and the "Link" header field (pagination) as per RFC 8288
-API_URL = "http://localhost:8000"
-```
+Available environment variables:
+- `DB_DRIVER`: Database driver (mysql.connector, psycopg2, sqlite3, etc.)
+- `DB_NAME`: Database name
+- `DB_USER`: Database username
+- `DB_PASS`: Database password
+- `DB_HOST`: Database host
+- `DB_PORT`: Database port (optional)
+- `API_URL`: Base URL for the API
+- `API_PORT`: Port for the API server
+- `ITEMS_PER_PAGE`: Items per page for pagination (default: 100)
 
 * That's it! Now run the API and play with it live! All thanks to [FastAPI](https://github.com/tiangolo/fastapi) generating the OpenAPI specs which is rendered by [Swagger UI](https://github.com/swagger-api/swagger-ui) 😊
 

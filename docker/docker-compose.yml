@@ -14,12 +14,39 @@ services:
             sh -c "python initial_data.py
             && uvicorn api:app --host 0.0.0.0 --port 8000"
         ports:
-            - "8000:8000"
+            - "${API_PORT:-8000}:8000"
+        environment:
+            # Database configuration
+            - DB_DRIVER=mysql.connector
+            - DB_NAME=raddb
+            - DB_USER=raduser
+            - DB_PASS=radpass
+            - DB_HOST=mydb
+            - DB_PORT=3306
+            # API configuration
+            - API_URL=http://localhost:8000
+            - API_HOST=0.0.0.0
+            - API_PORT=8000
+            # Pagination settings
+            - ITEMS_PER_PAGE=100
+            # Table names
+            - TABLE_RADCHECK=radcheck
+            - TABLE_RADREPLY=radreply
+            - TABLE_RADGROUPCHECK=radgroupcheck
+            - TABLE_RADGROUPREPLY=radgroupreply
+            - TABLE_RADUSERGROUP=radusergroup
+            - TABLE_NAS=nas
+            # Application settings
+            - DEBUG=false
+            - LOG_LEVEL=INFO
     # MySQL database with FreeRADIUS schema
     mydb:
         image: mysql
         environment:
-            MYSQL_ROOT_PASSWORD: mypass
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-mypass}
+            MYSQL_DATABASE: ${DB_NAME:-raddb}
+            MYSQL_USER: ${DB_USER:-raduser}
+            MYSQL_PASSWORD: ${DB_PASS:-radpass}
         volumes:
             - ./freeradius-mysql/1-database.sql:/docker-entrypoint-initdb.d/1.sql
             - ./freeradius-mysql/2-schema.sql:/docker-entrypoint-initdb.d/2.sql
@@ -39,7 +66,9 @@ services:
                 condition: service_healthy
         environment:
             - PMA_HOST=mydb
+            - PMA_USER=${DB_USER:-raduser}
+            - PMA_PASSWORD=${DB_PASS:-radpass}
         ports:
-            - "8080:80"
+            - "${PMA_PORT:-8080}:80"
 volumes:
     myvol:
