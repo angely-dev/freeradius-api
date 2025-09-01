@@ -3,7 +3,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security.api_key import APIKeyHeader
 
-from settings import settings
+from src.settings import settings
 
 # Create API key header checker
 api_key_header = APIKeyHeader(name=settings.api_key_header, auto_error=False)

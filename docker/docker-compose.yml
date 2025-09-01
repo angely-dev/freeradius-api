@@ -7,12 +7,12 @@ services:
       dockerfile: docker/Dockerfile
     restart: unless-stopped
     depends_on:
-      - mydb
+      - myraddb
     # I just wanna run two commands and have to use this ugly syntax, really Docker?
     # First, we insert some initial data then we run the Uvicorn web server.
     command: >
       sh -c "python initial_data.py
-      && uvicorn api:app --host 0.0.0.0 --port 8000"
+      && uvicorn src.api:app --host 0.0.0.0 --port 8000"
     ports:
       - "${API_PORT:-8000}:8000"
     environment:
@@ -21,7 +21,7 @@ services:
       - DB_NAME=raddb
       - DB_USER=raduser
       - DB_PASS=radpass
-      - DB_HOST=mydb
+      - DB_HOST=myraddb
       - DB_PORT=3306
       # API configuration
       - API_URL=http://localhost:8000
@@ -41,40 +41,33 @@ services:
       - DEBUG=false
       - LOG_LEVEL=INFO
   # MySQL database with FreeRADIUS schema
-  mydb:
+  myraddb:
     image: mariadb:11.7.2-noble
     restart: unless-stopped
+    ports:
+      - "${FORWARD_DB_PORT:-3306}:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-root}"
+      # MYSQL_ROOT_HOST: "%"
+      MYSQL_PORT: "${DB_PORT:-3306}"
+      MYSQL_DATABASE: "${DB_DATABASE:-notused}"
+      MYSQL_USER: "${DB_USERNAME:-notused}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-notused}"
+      #MYSQL_ALLOW_EMPTY_PASSWORD: 1
     volumes:
       - ./freeradius-mysql/1-database.sql:/docker-entrypoint-initdb.d/1.sql
       - ./freeradius-mysql/2-schema.sql:/docker-entrypoint-initdb.d/2.sql
       - ./freeradius-mysql/3-setup.sql:/docker-entrypoint-initdb.d/3.sql
       - freeradius-mariadb:/var/lib/mysql
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u",
-          "root",
-          "-p${MYSQL_ROOT_PASSWORD:-root}",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
   # phpMyAdmin web interface (optional):
   # it will run on http://localhost:8080 (root/mypass or raduser/radpass)
   myadmin:
     image: phpmyadmin
     restart: unless-stopped
     depends_on:
-      - mydb
+      - myraddb
     environment:
-      - PMA_HOST=mydb
+      - PMA_HOST=myraddb
       - PMA_USER=${DB_USER:-raduser}
       - PMA_PASSWORD=${DB_PASS:-radpass}
     ports:

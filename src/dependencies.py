@@ -4,8 +4,8 @@ from fastapi import Depends
 from pyfreeradius.repositories import GroupRepository, NasRepository, UserRepository
 from pyfreeradius.services import GroupService, NasService, UserService
 
-from database import db_connect
-from settings import settings
+from src.database import db_connect
+from src.settings import settings
 
 #
 # Here we use FastAPI Dependency Injection system.

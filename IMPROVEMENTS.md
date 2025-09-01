@@ -16,7 +16,6 @@ Current Issue: No authentication system, database credentials in plain text.
 
 Improvements:
 
-    Implement JWT-based authentication
     Add role-based access control (RBAC)
     Use environment variables for secrets
     Add rate limiting and request validation
@@ -133,4 +132,3 @@ Improvements:
     Create service layer abstractions
 
 Would you like me to implement any of these improvements? I can start with the highest priority items like configuration management, security enhancements, or testing improvements.
-

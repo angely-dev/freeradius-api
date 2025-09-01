@@ -1,6 +1,6 @@
 from importlib import import_module
 
-from settings import settings
+from src.settings import settings
 
 # Dynamically import the DB driver
 db_driver = import_module(settings.db_driver)

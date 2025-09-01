@@ -9,7 +9,7 @@ services:
     depends_on:
       - mydb
     # In production, we don't populate development data
-    command: uvicorn api:app --host 0.0.0.0 --port 8000
+    command: uvicorn src.api:app --host 0.0.0.0 --port 8000
     ports:
       - "${API_PORT:-8000}:8000"
     environment:

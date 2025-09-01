@@ -6,9 +6,9 @@ from pyfreeradius.models import Group, Nas, User
 from pyfreeradius.params import GroupUpdate, NasUpdate, UserUpdate
 from pyfreeradius.services import ServiceExceptions
 
-from auth import verify_api_key
-from dependencies import GroupServiceDep, NasServiceDep, UserServiceDep
-from settings import settings
+from src.auth import verify_api_key
+from src.dependencies import GroupServiceDep, NasServiceDep, UserServiceDep
+from src.settings import settings
 
 
 # Error model and responses
