@@ -6,3 +6,11 @@
 __pycache__/
 htmlcov/
 venv/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker volumes
+myvol/
