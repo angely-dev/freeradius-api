@@ -1,11 +1,11 @@
 from importlib import import_module
 
-from settings import DB_DRIVER, DB_HOST, DB_NAME, DB_PASS, DB_USER
+from settings import settings
 
 # Dynamically import the DB driver
-db_driver = import_module(DB_DRIVER)
+db_driver = import_module(settings.db_driver)
 
 
 # Just a util to obtain a new DB session using given DB settings
 def db_connect():
-    return db_driver.connect(user=DB_USER, password=DB_PASS, host=DB_HOST, database=DB_NAME)
+    return db_driver.connect(user=settings.db_user, password=settings.db_pass, host=settings.db_host, database=settings.db_name)
