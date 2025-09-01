@@ -1,4 +1,4 @@
-cmport pytest
+import pytest
 
 from src.database import get_db_connection
 
