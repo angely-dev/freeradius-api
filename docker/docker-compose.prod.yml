@@ -8,11 +8,8 @@ services:
     restart: unless-stopped
     depends_on:
       - mydb
-    # I just wanna run two commands and have to use this ugly syntax, really Docker?
-    # First, we insert some initial data then we run the Uvicorn web server.
-    command: >
-      sh -c "python initial_data.py
-      && uvicorn api:app --host 0.0.0.0 --port 8000"
+    # In production, we don't populate development data
+    command: uvicorn api:app --host 0.0.0.0 --port 8000
     ports:
       - "${API_PORT:-8000}:8000"
     environment:
@@ -37,7 +34,7 @@ services:
       - TABLE_RADUSERGROUP=radusergroup
       - TABLE_NAS=nas
       # Application settings
-      - ENV=dev
+      - ENV=prod
       - DEBUG=false
       - LOG_LEVEL=INFO
   # MySQL database with FreeRADIUS schema

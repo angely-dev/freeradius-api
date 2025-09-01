@@ -281,7 +281,11 @@ wget https://github.com/angely-dev/freeradius-api/archive/refs/heads/master.zip
 unzip master.zip
 cd freeradius-api-master/docker
 #
+# For development environment (populates sample data):
 docker compose up -d
+#
+# For production environment (no sample data):
+# docker compose -f docker-compose.prod.yml up -d
 ```
 
 Docker output should be like this:
@@ -305,10 +309,28 @@ Creating docker_radapi_1  ... done
 
 The services will be available at:
 - API: http://localhost:8000
-- phpMyAdmin: http://localhost:8080
+- phpMyAdmin: http://localhost:8000
 - FreeRADIUS: UDP ports 1812 (authentication) and 1813 (accounting)
 
 Then go to: http://localhost:8000/docs
+
+## Environment-specific configurations
+
+This project supports different environments to prevent development data from being populated in production:
+
+1. **Development environment** (`docker-compose.yml`): Populates the database with sample data for testing
+2. **Production environment** (`docker-compose.prod.yml`): Does not populate any sample data
+
+To use the production environment, run:
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+The environment is controlled by the `ENV` variable:
+- `ENV=dev` (default): Populates development data
+- `ENV=prod`: Does not populate development data
+
+## Using a venv
 
 ## Using a venv
 
