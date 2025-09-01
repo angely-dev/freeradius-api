@@ -52,6 +52,7 @@ curl -X 'GET' http://localhost:8000/nas
     {"nasname": "4.4.4.5", "shortname": "another-nas", "secret": "another-secret"},
 ]
 ```
+
 ```sh
 curl -X 'GET' http://localhost:8000/users
 #> 200 OK
@@ -82,6 +83,7 @@ curl -X 'GET' http://localhost:8000/users
     # …
 ]
 ```
+
 ```sh
 curl -X 'GET' http://localhost:8000/groups
 #> 200 OK
@@ -124,6 +126,7 @@ curl -X 'GET' http://localhost:8000/nas/3.3.3.3
     "secret": "my-super-secret"
 }
 ```
+
 ```sh
 curl -X 'GET' http://localhost:8000/users/eve
 #> 200 OK
@@ -139,6 +142,7 @@ curl -X 'GET' http://localhost:8000/users/eve
     "groups": [{"groupname": "100m", "priority": 1}, {"groupname": "200m", "priority": 2}],
 }
 ```
+
 ```sh
 #> 200 OK
 curl -X 'GET' http://localhost:8000/groups/100m
@@ -168,6 +172,7 @@ curl -X 'POST' \
 }'
 #> 201 Created
 ```
+
 ```sh
 curl -X 'POST' \
   'http://localhost:8000/users' \
@@ -183,6 +188,7 @@ curl -X 'POST' \
 }'
 #> 201 Created
 ```
+
 ```sh
 curl -X 'POST' \
   'http://localhost:8000/groups' \
@@ -218,6 +224,7 @@ curl -X 'PATCH' \
 }'
 #> 200 OK
 ```
+
 ```sh
 curl -X 'PATCH' \
   'http://localhost:8000/users/my-user%40my-realm' \
@@ -233,6 +240,7 @@ curl -X 'PATCH' \
 }'
 #> 200 OK
 ```
+
 ```sh
 curl -X 'PATCH' \
   'http://localhost:8000/groups/300m' \
@@ -252,10 +260,12 @@ curl -X 'PATCH' \
 curl -X 'DELETE' http://localhost:8000/nas/5.5.5.5
 #> 204 No Content
 ```
+
 ```sh
 curl -X 'DELETE' http://localhost:8000/users/my-user@my-realm
 #> 204 No Content
 ```
+
 ```sh
 curl -X 'DELETE' http://localhost:8000/groups/300m
 #> 204 No Content
@@ -308,11 +318,12 @@ Creating docker_radapi_1  ... done
 ```
 
 The services will be available at:
-- API: http://localhost:8000
-- phpMyAdmin: http://localhost:8000
-- FreeRADIUS: UDP ports 1812 (authentication) and 1813 (accounting)
 
-Then go to: http://localhost:8000/docs
+* API: <http://localhost:8000>
+* phpMyAdmin: <http://localhost:8080>
+* FreeRADIUS: UDP ports 1812 (authentication) and 1813 (accounting)
+
+Then go to: <http://localhost:8000/docs>
 
 ## Environment-specific configurations
 
@@ -322,15 +333,15 @@ This project supports different environments to prevent development data from be
 2. **Production environment** (`docker-compose.prod.yml`): Does not populate any sample data
 
 To use the production environment, run:
+
 ```bash
 docker compose -f docker-compose.prod.yml up -d
 ```
 
 The environment is controlled by the `ENV` variable:
-- `ENV=dev` (default): Populates development data
-- `ENV=prod`: Does not populate development data
 
-## Using a venv
+* `ENV=development` (default): Populates development data
+* `ENV=production`: Does not populate development data
 
 ## Using a venv
 
@@ -382,12 +393,13 @@ export API_URL="http://localhost:8000"
 ```
 
 Available environment variables:
-- `DB_TYPE`: Database type (mysql, postgres, mssql, oracle, sqlite)
-- `DB_HOST`: Database host
-- `DB_USERNAME`: Database username
-- `DB_PASSWORD`: Database password
-- `DB_DATABASE`: Database name
-- `API_URL`: Base URL for the API
+
+* `DB_TYPE`: Database type (mysql, postgres, mssql, oracle, sqlite)
+* `DB_HOST`: Database host
+* `DB_USERNAME`: Database username
+* `DB_PASSWORD`: Database password
+* `DB_DATABASE`: Database name
+* `API_URL`: Base URL for the API
 
 * That's it! Now run the API and play with it live! All thanks to [FastAPI](https://github.com/tiangolo/fastapi) generating the OpenAPI specs which is rendered by [Swagger UI](https://github.com/swagger-api/swagger-ui) 😊
 
@@ -400,7 +412,7 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 ```
 
-* Then go to: http://localhost:8000/docs
+* Then go to: <http://localhost:8000/docs>
 
 <img width="1292" height="1008" alt="476616451-ec229626-dff5-43ce-869b-0602b2454c56" src="https://github.com/user-attachments/assets/3ef759fa-551a-4572-ba5f-c10692ce791c" />
 
@@ -476,6 +488,7 @@ To enable API key authentication:
 When enabled, all endpoints will require authentication via the specified header.
 
 Example with default settings:
+
 ```sh
 $ curl -X 'GET' -H 'X-API-Key: your-secret-key' -i http://localhost:8000/users
 HTTP/1.1 200 OK
@@ -483,7 +496,7 @@ HTTP/1.1 200 OK
 ["bob","alice@adsl","eve","oscar@wil.de"]
 ```
 
-> In the above code, we make use of both [global dependencies](https://fastapi.tiangolo.com/tutorial/dependencies/global-dependencies/) and [security](https://fastapi.tiangolo.com/tutorial/security/first-steps/) features of FastAPI. API key is not properly documented yet but the issue https://github.com/tiangolo/fastapi/issues/142 provides some working snippets.
+> In the above code, we make use of both [global dependencies](https://fastapi.tiangolo.com/tutorial/dependencies/global-dependencies/) and [security](https://fastapi.tiangolo.com/tutorial/security/first-steps/) features of FastAPI. API key is not properly documented yet but the issue <https://github.com/tiangolo/fastapi/issues/142> provides some working snippets.
 
 > The key would not normally go "in the clear" in the code like this. Depending on your setup, it would be passed using CI/CD variables for example.
 
@@ -497,12 +510,14 @@ HTTP/1.1 403 Forbidden
 
 {"detail":"Not authenticated"}
 ```
+
 ```sh
 $ curl -X 'GET' -H 'X-API-Key: an-invalid-key' -i http://localhost:8000/users
 HTTP/1.1 401 Unauthorized
 
 {"detail":"Invalid key"}
 ```
+
 ```sh
 $ curl -X 'GET' -H 'X-API-Key: my-valid-key' -i http://localhost:8000/users
 HTTP/1.1 200 OK
