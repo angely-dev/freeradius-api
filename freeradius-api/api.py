@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from typing import Annotated
 
-from fastapi import APIRouter, FastAPI, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Response
 from pyfreeradius.models import Group, Nas, User
 from pyfreeradius.params import GroupUpdate, NasUpdate, UserUpdate
 from pyfreeradius.services import ServiceExceptions
 
+from auth import verify_api_key
 from dependencies import GroupServiceDep, NasServiceDep, UserServiceDep
-from settings import API_URL, ITEMS_PER_PAGE
+from settings import settings
 
 
 # Error model and responses
@@ -25,33 +26,33 @@ router = APIRouter()
 
 @router.get("/")
 def read_root():
-    return {"Welcome!": f"API docs is available at {API_URL}/docs"}
+    return {"Welcome!": f"API docs is available at {settings.api_url}/docs"}
 
 
 @router.get("/nas", tags=["nas"], status_code=200, response_model=list[Nas])
 def get_nases(nas_service: NasServiceDep, response: Response, nasname_gt: str | None = None):
-    nas = nas_service.find(limit=ITEMS_PER_PAGE, nasname_gt=nasname_gt)
+    nas = nas_service.find(limit=settings.items_per_page, nasname_gt=nasname_gt)
     if nas:
         last_nasname = nas[-1].nasname
-        response.headers["Link"] = f'<{API_URL}/nas?nasname_gt={last_nasname}>; rel="next"'
+        response.headers["Link"] = f'<{settings.api_url}/nas?nasname_gt={last_nasname}>; rel="next"'
     return nas
 
 
 @router.get("/users", tags=["users"], status_code=200, response_model=list[User])
 def get_users(user_service: UserServiceDep, response: Response, username_gt: str | None = None):
-    users = user_service.find(limit=ITEMS_PER_PAGE, username_gt=username_gt)
+    users = user_service.find(limit=settings.items_per_page, username_gt=username_gt)
     if users:
         last_username = users[-1].username
-        response.headers["Link"] = f'<{API_URL}/users?username_gt={last_username}>; rel="next"'
+        response.headers["Link"] = f'<{settings.api_url}/users?username_gt={last_username}>; rel="next"'
     return users
 
 
 @router.get("/groups", tags=["groups"], status_code=200, response_model=list[Group])
 def get_groups(group_service: GroupServiceDep, response: Response, groupname_gt: str | None = None):
-    groups = group_service.find(limit=ITEMS_PER_PAGE, groupname_gt=groupname_gt)
+    groups = group_service.find(limit=settings.items_per_page, groupname_gt=groupname_gt)
     if groups:
         last_groupname = groups[-1].groupname
-        response.headers["Link"] = f'<{API_URL}/groups?groupname_gt={last_groupname}>; rel="next"'
+        response.headers["Link"] = f'<{settings.api_url}/groups?groupname_gt={last_groupname}>; rel="next"'
     return groups
 
 
@@ -86,7 +87,7 @@ def post_nas(nas: Nas, nas_service: NasServiceDep, response: Response):
     except ServiceExceptions.NasAlreadyExists as exc:
         raise HTTPException(409, str(exc))
 
-    response.headers["Location"] = f"{API_URL}/nas/{nas.nasname}"
+    response.headers["Location"] = f"{settings.api_url}/nas/{nas.nasname}"
     return nas
 
 
@@ -106,7 +107,7 @@ def post_user(
     except ServiceExceptions.GroupNotFound as exc:
         raise HTTPException(422, str(exc))
 
-    response.headers["Location"] = f"{API_URL}/users/{user.username}"
+    response.headers["Location"] = f"{settings.api_url}/users/{user.username}"
     return user
 
 
@@ -126,7 +127,7 @@ def post_group(
     except ServiceExceptions.UserNotFound as exc:
         raise HTTPException(422, str(exc))
 
-    response.headers["Location"] = f"{API_URL}/groups/{group.groupname}"
+    response.headers["Location"] = f"{settings.api_url}/groups/{group.groupname}"
     return group
 
 
@@ -182,7 +183,7 @@ def patch_nas(nasname: str, nas_update: NasUpdate, nas_service: NasServiceDep, r
     except ServiceExceptions.NasNotFound as exc:
         raise HTTPException(404, str(exc))
 
-    response.headers["Location"] = f"{API_URL}/nas/{nasname}"
+    response.headers["Location"] = f"{settings.api_url}/nas/{nasname}"
     return updated_nas
 
 
@@ -215,7 +216,7 @@ def patch_user(
     ) as exc:
         raise HTTPException(422, str(exc))
 
-    response.headers["Location"] = f"{API_URL}/users/{username}"
+    response.headers["Location"] = f"{settings.api_url}/users/{username}"
     return updated_user
 
 
@@ -248,10 +249,13 @@ def patch_group(
     ) as exc:
         raise HTTPException(422, str(exc))
 
-    response.headers["Location"] = f"{API_URL}/groups/{groupname}"
+    response.headers["Location"] = f"{settings.api_url}/groups/{groupname}"
     return updated_group
 
 
 # API is now ready!
-app = FastAPI(title="FreeRADIUS REST API")
+app = FastAPI(
+    title="FreeRADIUS REST API",
+    dependencies=[Depends(verify_api_key)] if settings.api_key_enabled else []
+)
 app.include_router(router)

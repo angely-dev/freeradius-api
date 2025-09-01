@@ -82,6 +82,9 @@ The application uses environment-based configuration with Pydantic BaseSettings.
 | `ITEMS_PER_PAGE` | `100` | Items per page for pagination |
 | `DEBUG` | `false` | Enable debug mode |
 | `LOG_LEVEL` | `INFO` | Logging level |
+| `API_KEY_ENABLED` | `false` | Enable API key authentication |
+| `API_KEY` | `None` | API key for authentication |
+| `API_KEY_HEADER` | `X-API-Key` | Header name for API key |
 
 ### Configuration File
 
@@ -231,10 +234,11 @@ This starts:
 ## Security Considerations
 
 ### Authentication
-- Optional API key authentication
-- Configure in `freeradius-api/auth.py` (create if needed)
+- Optional API key authentication via environment variables
+- Enable with `API_KEY_ENABLED=true` and set `API_KEY` value
 - Use HTTPS in production
 - Never commit API keys to version control
+- API key is read from environment variables, not hardcoded
 
 ### Database Security
 - Use strong passwords
@@ -247,7 +251,7 @@ This starts:
 ### Production Considerations
 - Set `API_URL` in settings.py
 - Configure proper database credentials
-- Enable authentication
+- Enable authentication with `API_KEY_ENABLED=true` and set a strong `API_KEY`
 - Use reverse proxy (nginx, etc.)
 - Set up monitoring and logging
 - Use environment variables for sensitive data
@@ -274,9 +278,13 @@ Consider using environment variables for:
 4. Update Docker initialization scripts if needed
 
 ### Adding Authentication
-1. Create `freeradius-api/auth.py`
-2. Add dependency to FastAPI app
-3. Update tests to include authentication
+The API now supports API key authentication which can be enabled through environment variables:
+
+1. Set `API_KEY_ENABLED=true` in your environment or `.env` file
+2. Set `API_KEY=your-secret-key` in your environment or `.env` file
+3. Optionally change the header name with `API_KEY_HEADER=X-API-Key` (default)
+
+When enabled, all endpoints will require authentication via the specified header.
 
 ## Troubleshooting
 

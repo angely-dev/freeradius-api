@@ -272,7 +272,7 @@ Reminder:
 
 ## Using Docker
 
-I made a full Docker stack for testing purposes that should run "as is". It includes the API and a MySQL database with some initial data 😊
+I made a full Docker stack for testing purposes that should run "as is". It includes the API, a MariaDB database with the FreeRADIUS schema, and a FreeRADIUS server 😊
 
 If you already have a FreeRADIUS database (either local or remote) or if you fear Docker, you can skip this section 🚀
 
@@ -288,17 +288,25 @@ Docker output should be like this:
 
 ```bash
 Creating network "docker_default" with the default driver
-Creating volume "docker_myvol" with default driver
-Pulling mydb (mysql:)...
+Creating volume "docker_mariadb_data" with default driver
+Pulling mariadb (mariadb:10.6)...
+[…]
+Pulling freeradius (freeradius/freeradius-server:3.2.3)...
 […]
 Building radapi
 […]
 Pulling myadmin (phpmyadmin:)...
 […]
-Creating docker_mydb_1 ... done
+Creating docker_mariadb_1 ... done
+Creating docker_freeradius_1 ... done
 Creating docker_myadmin_1 ... done
 Creating docker_radapi_1  ... done
 ```
+
+The services will be available at:
+- API: http://localhost:8000
+- phpMyAdmin: http://localhost:8080
+- FreeRADIUS: UDP ports 1812 (authentication) and 1813 (accounting)
 
 Then go to: http://localhost:8000/docs
 
@@ -439,36 +447,23 @@ You may want to add authentication to the API.
 
 ## TL;DR
 
-A simple solution is through API key.
-Only two steps are required this way:
+The API now supports API key authentication which can be enabled through environment variables.
 
-* Create `src/auth.py`:
+To enable API key authentication:
 
-```py
-from fastapi import Depends, HTTPException
-from fastapi.security.api_key import APIKeyHeader
+1. Set `API_KEY_ENABLED=true` in your environment or `.env` file
+2. Set `API_KEY=your-secret-key` in your environment or `.env` file
+3. Optionally change the header name with `API_KEY_HEADER=X-API-Key` (default)
 
-_x_api_key = 'my-valid-key'
-_x_api_key_header = APIKeyHeader(name='X-API-Key')
+When enabled, all endpoints will require authentication via the specified header.
 
-async def verify_key(x_api_key: str = Depends(_x_api_key_header)):
-    if x_api_key != _x_api_key:
-        raise HTTPException(401, 'Invalid key')
+Example with default settings:
+```sh
+$ curl -X 'GET' -H 'X-API-Key: your-secret-key' -i http://localhost:8000/users
+HTTP/1.1 200 OK
+
+["bob","alice@adsl","eve","oscar@wil.de"]
 ```
-
-* Apply following changes in `src/api.py`:
-
-```diff
-# top of the file
-+from auth import verify_key
-+from fastapi import Depends
-
-# bottom of the file
--app = FastAPI(title='FreeRADIUS REST API')
-+app = FastAPI(title='FreeRADIUS REST API', dependencies=[Depends(verify_key)])
-```
-
-That's it! All endpoints now require authentication.
 
 > In the above code, we make use of both [global dependencies](https://fastapi.tiangolo.com/tutorial/dependencies/global-dependencies/) and [security](https://fastapi.tiangolo.com/tutorial/security/first-steps/) features of FastAPI. API key is not properly documented yet but the issue https://github.com/tiangolo/fastapi/issues/142 provides some working snippets.
 
