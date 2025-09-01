@@ -252,7 +252,10 @@ class UserRepository(BaseRepository):
                 UNION SELECT COUNT(DISTINCT username) FROM {self.radreply} WHERE username = %s
                 UNION SELECT COUNT(DISTINCT username) FROM {self.radusergroup} WHERE username = %s"""
             db_cursor.execute(sql, (username, username, username))
-            counts = [count for count, in db_cursor.fetchall()]
+            results = db_cursor.fetchall()
+            if not results:
+                return False
+            counts = [count for count, in results]
             return sum(counts) > 0
 
     def find_all_usernames(self) -> List[str]:
@@ -364,7 +367,10 @@ class GroupRepository(BaseRepository):
             sql = f"""SELECT COUNT(DISTINCT groupname) FROM {self.radgroupcheck} WHERE groupname = %s
                 UNION SELECT COUNT(DISTINCT groupname) FROM {self.radgroupreply} WHERE groupname = %s"""
             db_cursor.execute(sql, (groupname, groupname))
-            counts = [count for count, in db_cursor.fetchall()]
+            results = db_cursor.fetchall()
+            if not results:
+                return False
+            counts = [count for count, in results]
             return sum(counts) > 0
 
     def find_all_groupnames(self) -> List[str]:
@@ -458,7 +464,10 @@ class NasRepository(BaseRepository):
         with self._db_cursor() as db_cursor:
             sql = f'SELECT COUNT(*) FROM {self.nas} WHERE nasname = %s'
             db_cursor.execute(sql, (nasname, ))
-            count, = db_cursor.fetchone()
+            result = db_cursor.fetchone()
+            if result is None or len(result) == 0:
+                return False
+            count, = result
             return count > 0
 
     def find_all_nasnames(self) -> List[str]:
