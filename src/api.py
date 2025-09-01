@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, FastAPI, HTTPException, Response
+from fastapi import APIRouter, FastAPI, HTTPException, Response, Depends
 from pydantic import BaseModel
 
 from .config import AppSettings
@@ -8,6 +8,7 @@ from .database import get_db_connection
 from .pyfreeradius import (Group, GroupRepository, GroupUpdate, Nas,
                            NasRepository, NasUpdate, User, UserRepository,
                            UserUpdate)
+from .auth import verify_api_key
 
 SETTINGS = AppSettings()
 
@@ -28,6 +29,9 @@ class RadAPIError(BaseModel):
 e404_response = {404: {'model': RadAPIError, 'description': 'Item not found'}}
 e409_response = {409: {'model': RadAPIError, 'description': 'Item already exists'}}
 
+# Create dependencies list if API key is enabled
+dependencies = [Depends(verify_api_key)] if SETTINGS.api_key_enabled else []
+
 # Our API router and routes
 router = APIRouter()
 
@@ -37,7 +41,7 @@ def read_root():
     return {'Welcome!': f'API docs is available at {SETTINGS.api_url}/docs'}
 
 
-@router.get('/nas', tags=['nas'], status_code=200, response_model=List[str])
+@router.get('/nas', tags=['nas'], status_code=200, response_model=List[str], dependencies=dependencies)
 def get_nas(response: Response, from_nasname: str = None):
     nasnames = nas_repo.find_nasnames(from_nasname)
     if nasnames:
@@ -46,7 +50,7 @@ def get_nas(response: Response, from_nasname: str = None):
     return nasnames
 
 
-@router.get('/users', tags=['users'], status_code=200, response_model=List[str])
+@router.get('/users', tags=['users'], status_code=200, response_model=List[str], dependencies=dependencies)
 def get_users(response: Response, from_username: str = None):
     usernames = user_repo.find_usernames(from_username)
     if usernames:
@@ -55,7 +59,7 @@ def get_users(response: Response, from_username: str = None):
     return usernames
 
 
-@router.get('/groups', tags=['groups'], status_code=200, response_model=List[str])
+@router.get('/groups', tags=['groups'], status_code=200, response_model=List[str], dependencies=dependencies)
 def get_groups(response: Response, from_groupname: str = None):
     groupnames = group_repo.find_groupnames(from_groupname)
     if groupnames:
@@ -64,7 +68,7 @@ def get_groups(response: Response, from_groupname: str = None):
     return groupnames
 
 
-@router.get('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas, responses={**e404_response})
+@router.get('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas, responses={**e404_response}, dependencies=dependencies)
 def get_nas(nasname: str):
     nas = nas_repo.find_one(nasname)
     if not nas:
@@ -72,7 +76,7 @@ def get_nas(nasname: str):
     return nas
 
 
-@router.post('/nas', tags=['nas'], status_code=201, response_model=Nas, responses={**e409_response})
+@router.post('/nas', tags=['nas'], status_code=201, response_model=Nas, responses={**e409_response}, dependencies=dependencies)
 def add_nas(nas: Nas, response: Response):
     if nas_repo.exists(nas.nasname):
         raise HTTPException(409, 'Given NAS already exists')
@@ -81,7 +85,7 @@ def add_nas(nas: Nas, response: Response):
     return nas
 
 
-@router.put('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas, responses={**e404_response})
+@router.put('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas, responses={**e404_response}, dependencies=dependencies)
 def replace_nas(nasname: str, nas: Nas):
     if not nas_repo.exists(nasname):
         raise HTTPException(404, 'Given NAS does not exist')
@@ -97,7 +101,7 @@ def replace_nas(nasname: str, nas: Nas):
     return nas
 
 
-@router.patch('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas, responses={**e404_response})
+@router.patch('/nas/{nasname}', tags=['nas'], status_code=200, response_model=Nas, responses={**e404_response}, dependencies=dependencies)
 def update_nas(nasname: str, nas: NasUpdate):
     if not nas_repo.exists(nasname):
         raise HTTPException(404, 'Given NAS does not exist')
@@ -105,14 +109,14 @@ def update_nas(nasname: str, nas: NasUpdate):
     return nas_repo.find_one(nasname)
 
 
-@router.delete('/nas/{nasname}', tags=['nas'], status_code=204, responses={**e404_response})
+@router.delete('/nas/{nasname}', tags=['nas'], status_code=204, responses={**e404_response}, dependencies=dependencies)
 def delete_nas(nasname: str):
     if not nas_repo.exists(nasname):
         raise HTTPException(404, 'Given NAS does not exist')
     nas_repo.delete(nasname)
 
 
-@router.get('/users/{username}', tags=['users'], status_code=200, response_model=User, responses={**e404_response})
+@router.get('/users/{username}', tags=['users'], status_code=200, response_model=User, responses={**e404_response}, dependencies=dependencies)
 def get_user(username: str):
     user = user_repo.find_one(username)
     if not user:
@@ -120,7 +124,7 @@ def get_user(username: str):
     return user
 
 
-@router.post('/users', tags=['users'], status_code=201, response_model=User, responses={**e409_response})
+@router.post('/users', tags=['users'], status_code=201, response_model=User, responses={**e409_response}, dependencies=dependencies)
 def add_user(user: User, response: Response):
     if user_repo.exists(user.username):
         raise HTTPException(409, 'Given user already exists')
@@ -129,7 +133,7 @@ def add_user(user: User, response: Response):
     return user
 
 
-@router.put('/users/{username}', tags=['users'], status_code=200, response_model=User, responses={**e404_response})
+@router.put('/users/{username}', tags=['users'], status_code=200, response_model=User, responses={**e404_response}, dependencies=dependencies)
 def replace_user(username: str, user: User):
     if not user_repo.exists(username):
         raise HTTPException(404, 'Given user does not exist')
@@ -141,7 +145,7 @@ def replace_user(username: str, user: User):
     return user
 
 
-@router.patch('/users/{username}', tags=['users'], status_code=200, response_model=User, responses={**e404_response})
+@router.patch('/users/{username}', tags=['users'], status_code=200, response_model=User, responses={**e404_response}, dependencies=dependencies)
 def update_user(username: str, user: UserUpdate):
     if not user_repo.exists(username):
         raise HTTPException(404, 'Given user does not exist')
@@ -149,14 +153,14 @@ def update_user(username: str, user: UserUpdate):
     return user_repo.find_one(username)
 
 
-@router.delete('/users/{username}', tags=['users'], status_code=204, responses={**e404_response})
+@router.delete('/users/{username}', tags=['users'], status_code=204, responses={**e404_response}, dependencies=dependencies)
 def delete_user(username: str):
     if not user_repo.exists(username):
         raise HTTPException(404, 'Given user does not exist')
     user_repo.delete(username)
 
 
-@router.get('/groups/{groupname}', tags=['groups'], status_code=200, response_model=Group, responses={**e404_response})
+@router.get('/groups/{groupname}', tags=['groups'], status_code=200, response_model=Group, responses={**e404_response}, dependencies=dependencies)
 def get_group(groupname: str):
     group = group_repo.find_one(groupname)
     if not group:
@@ -164,7 +168,7 @@ def get_group(groupname: str):
     return group
 
 
-@router.post('/groups', tags=['groups'], status_code=201, response_model=Group, responses={**e409_response})
+@router.post('/groups', tags=['groups'], status_code=201, response_model=Group, responses={**e409_response}, dependencies=dependencies)
 def add_group(group: Group, response: Response):
     if group_repo.exists(group.groupname):
         raise HTTPException(409, 'Given group already exists')
@@ -173,7 +177,7 @@ def add_group(group: Group, response: Response):
     return group
 
 
-@router.put('/groups/{groupname}', tags=['groups'], status_code=200, response_model=Group, responses={**e404_response})
+@router.put('/groups/{groupname}', tags=['groups'], status_code=200, response_model=Group, responses={**e404_response}, dependencies=dependencies)
 def replace_group(groupname: str, group: Group):
     if not group_repo.exists(groupname):
         raise HTTPException(404, 'Given group does not exist')
@@ -184,7 +188,7 @@ def replace_group(groupname: str, group: Group):
     return group
 
 
-@router.patch('/groups/{groupname}', tags=['groups'], status_code=200, response_model=Group, responses={**e404_response})
+@router.patch('/groups/{groupname}', tags=['groups'], status_code=200, response_model=Group, responses={**e404_response}, dependencies=dependencies)
 def update_group(groupname: str, group: GroupUpdate):
     if not group_repo.exists(groupname):
         raise HTTPException(404, 'Given group does not exist')
@@ -192,7 +196,7 @@ def update_group(groupname: str, group: GroupUpdate):
     return group_repo.find_one(groupname)
 
 
-@router.delete('/groups/{groupname}', tags=['groups'], status_code=204, responses={**e404_response})
+@router.delete('/groups/{groupname}', tags=['groups'], status_code=204, responses={**e404_response}, dependencies=dependencies)
 def delete_group(groupname: str):
     if not group_repo.exists(groupname):
         raise HTTPException(404, 'Given group does not exist')

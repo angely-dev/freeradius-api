@@ -6,4 +6,4 @@ line-length = 120
 src = ["freeradius-api/"]
 
 [tool.pytest.ini_options]
-pythonpath = "freeradius-api/"
+pythonpath = "src/"
