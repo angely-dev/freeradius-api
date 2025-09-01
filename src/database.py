@@ -1,11 +1,18 @@
-from importlib import import_module
-
-from src.settings import settings
-
-# Dynamically import the DB driver
-db_driver = import_module(settings.db_driver)
-
-
-# Just a util to obtain a new DB session using given DB settings
-def db_connect():
-    return db_driver.connect(user=settings.db_user, password=settings.db_pass, host=settings.db_host, database=settings.db_name)
+def get_db_connection(db_type: str, db_host: str, db_username: str, db_password: str, db_database: str):
+    """ Get a database connection """
+    if db_type == 'mysql':
+        from mysql.connector import connect
+        return connect(user=db_username, password=db_password, host=db_host, database=db_database)
+    if db_type == 'mssql':
+        from pymssql import connect
+        return connect(user=db_username, password=db_password, server=db_host, database=db_database)
+    if db_type == 'postgres':
+        from psycopg2 import connect
+        return connect(user=db_username, password=db_password, host=db_host, database=db_database)
+    if db_type == 'sqlite':
+        from sqlite3 import connect
+        return connect(db_database)
+    if db_type == 'oracle':
+        from oracledb import connect
+        return connect(user=db_username, password=db_password, dsn=db_host)
+    raise ValueError('Unsupported database type')

@@ -279,7 +279,7 @@ If you already have a FreeRADIUS database (either local or remote) or if you fea
 ```bash
 wget https://github.com/angely-dev/freeradius-api/archive/refs/heads/master.zip
 unzip master.zip
-cd freeradius-api-master/docker
+cd freeradius-api-master
 #
 # For development environment (populates sample data):
 docker compose up -d
@@ -373,25 +373,21 @@ cp .env.example .env
 Or set environment variables directly:
 
 ```bash
-export DB_DRIVER="mysql.connector"
-export DB_NAME="raddb"
-export DB_USER="raduser"
-export DB_PASS="radpass"
-export DB_HOST="mydb"
+export DB_TYPE="mysql"
+export DB_HOST="localhost"
+export DB_USERNAME="raduser"
+export DB_PASSWORD="radpass"
+export DB_DATABASE="raddb"
 export API_URL="http://localhost:8000"
-export ITEMS_PER_PAGE="100"
 ```
 
 Available environment variables:
-- `DB_DRIVER`: Database driver (mysql.connector, psycopg2, sqlite3, etc.)
-- `DB_NAME`: Database name
-- `DB_USER`: Database username
-- `DB_PASS`: Database password
+- `DB_TYPE`: Database type (mysql, postgres, mssql, oracle, sqlite)
 - `DB_HOST`: Database host
-- `DB_PORT`: Database port (optional)
+- `DB_USERNAME`: Database username
+- `DB_PASSWORD`: Database password
+- `DB_DATABASE`: Database name
 - `API_URL`: Base URL for the API
-- `API_PORT`: Port for the API server
-- `ITEMS_PER_PAGE`: Items per page for pagination (default: 100)
 
 * That's it! Now run the API and play with it live! All thanks to [FastAPI](https://github.com/tiangolo/fastapi) generating the OpenAPI specs which is rendered by [Swagger UI](https://github.com/swagger-api/swagger-ui) 😊
 
