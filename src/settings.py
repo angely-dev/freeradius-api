@@ -1,5 +1,6 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings
+
 from pyfreeradius import RadTables
 
 

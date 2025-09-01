@@ -1,17 +1,12 @@
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
+import pytest
+from src.config import RadTables
 from src.pyfreeradius import (
-    UserRepository,
     GroupRepository,
     NasRepository,
-    User,
-    Group,
-    Nas,
-    AttributeOpValue,
-    UserGroup
+    UserRepository,
 )
-from src.config import RadTables
 
 
 class TestUserRepository:

@@ -1,7 +1,6 @@
-import pytest
 import os
 from unittest.mock import patch
-from fastapi.testclient import TestClient
+
 
 # Test API key functionality
 def test_api_key_disabled_by_default():
@@ -17,7 +16,7 @@ def test_api_key_disabled_by_default():
         with patch("src.database.get_db_connection"):
             from src.config import AppSettings
             settings = AppSettings()
-            assert settings.api_key_enabled == False
+            assert not settings.api_key_enabled
     finally:
         # Restore original environment
         if original_api_key_enabled is not None:
@@ -39,7 +38,7 @@ def test_api_key_can_be_enabled():
         with patch("src.database.get_db_connection"):
             from src.config import AppSettings
             settings = AppSettings()
-            assert settings.api_key_enabled == True
+            assert settings.api_key_enabled
             assert settings.api_key == "test-key-123"
             assert settings.api_key_header == "X-Test-Key"
     finally:

@@ -1,16 +1,6 @@
 import pytest
 from pydantic import ValidationError
-
-from src.pyfreeradius import (
-    AttributeOpValue,
-    User,
-    UserGroup,
-    UserUpdate,
-    Group,
-    GroupUpdate,
-    Nas,
-    NasUpdate
-)
+from src.pyfreeradius import AttributeOpValue, Group, GroupUpdate, Nas, NasUpdate, User, UserGroup, UserUpdate
 
 
 def test_attribute_op_value_validation():

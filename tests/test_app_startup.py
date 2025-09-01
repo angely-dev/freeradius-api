@@ -1,5 +1,5 @@
-import pytest
 from unittest.mock import patch
+
 
 # Test that the application can be imported without database connectivity
 def test_app_import_without_database():

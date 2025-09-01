@@ -1,14 +1,22 @@
 from typing import List
 
-from fastapi import APIRouter, FastAPI, HTTPException, Response, Depends
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Response
 from pydantic import BaseModel
 
+from .auth import verify_api_key
 from .config import AppSettings
 from .database import get_db_connection
-from .pyfreeradius import (Group, GroupRepository, GroupUpdate, Nas,
-                           NasRepository, NasUpdate, User, UserRepository,
-                           UserUpdate)
-from .auth import verify_api_key
+from .pyfreeradius import (
+    Group,
+    GroupRepository,
+    GroupUpdate,
+    Nas,
+    NasRepository,
+    NasUpdate,
+    User,
+    UserRepository,
+    UserUpdate,
+)
 
 SETTINGS = AppSettings()
 
@@ -42,7 +50,7 @@ def read_root():
 
 
 @router.get("/nas", tags=["nas"], status_code=200, response_model=List[str], dependencies=dependencies)
-def get_nas(response: Response, from_nasname: str = None):
+def get_nas_list(response: Response, from_nasname: str = None):
     nasnames = nas_repo.find_nasnames(from_nasname)
     if nasnames:
         last_nasname = nasnames[-1]

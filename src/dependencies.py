@@ -1,9 +1,9 @@
 from typing import Annotated
 
 from fastapi import Depends
+
 from pyfreeradius.repositories import GroupRepository, NasRepository, UserRepository
 from pyfreeradius.services import GroupService, NasService, UserService
-
 from src.database import db_connect
 from src.settings import settings
 

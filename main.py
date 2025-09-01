@@ -4,7 +4,6 @@ import argparse
 import sys
 
 import uvicorn
-
 from src.api import app
 from src.config import AppSettings
 

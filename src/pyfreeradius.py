@@ -1,8 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from contextlib import contextmanager
 from typing import List
 
-from pydantic import BaseModel, IPvAnyAddress, conint, constr, model_validator
+from pydantic import BaseModel, conint, constr, model_validator
 
 from .config import RadTables
 

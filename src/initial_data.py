@@ -1,8 +1,8 @@
 import os
 import time
+
 from pyfreeradius.models import AttributeOpValue, Group, Nas, User, UserGroup
 from pyfreeradius.repositories import GroupRepository, NasRepository, UserRepository
-
 from src.database import db_connect
 
 # This script populate "fake" data into the database

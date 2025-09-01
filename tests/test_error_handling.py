@@ -1,5 +1,5 @@
-import pytest
 from unittest.mock import patch
+
 from fastapi.testclient import TestClient
 
 # Mock the database connection to avoid connecting to a real database
