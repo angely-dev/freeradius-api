@@ -31,7 +31,7 @@ class TestUserRepository:
 
     def test_exists_returns_true_when_user_found(self, user_repo):
         """Test that exists returns True when user is found"""
-        with patch.object(user_repo, '_db_cursor') as mock_cursor_context:
+        with patch.object(user_repo, "_db_cursor") as mock_cursor_context:
             mock_cursor = Mock()
             mock_cursor_context.return_value.__enter__.return_value = mock_cursor
             # Mock fetchall to return results with count > 0
@@ -42,7 +42,7 @@ class TestUserRepository:
 
     def test_exists_returns_false_when_user_not_found(self, user_repo):
         """Test that exists returns False when user is not found"""
-        with patch.object(user_repo, '_db_cursor') as mock_cursor_context:
+        with patch.object(user_repo, "_db_cursor") as mock_cursor_context:
             mock_cursor = Mock()
             mock_cursor_context.return_value.__enter__.return_value = mock_cursor
             # Mock fetchall to return results with count = 0
@@ -53,7 +53,7 @@ class TestUserRepository:
 
     def test_exists_handles_empty_results(self, user_repo):
         """Test that exists handles empty results gracefully"""
-        with patch.object(user_repo, '_db_cursor') as mock_cursor_context:
+        with patch.object(user_repo, "_db_cursor") as mock_cursor_context:
             mock_cursor = Mock()
             mock_cursor_context.return_value.__enter__.return_value = mock_cursor
             # Mock fetchall to return empty results
@@ -80,7 +80,7 @@ class TestGroupRepository:
 
     def test_exists_returns_true_when_group_found(self, group_repo):
         """Test that exists returns True when group is found"""
-        with patch.object(group_repo, '_db_cursor') as mock_cursor_context:
+        with patch.object(group_repo, "_db_cursor") as mock_cursor_context:
             mock_cursor = Mock()
             mock_cursor_context.return_value.__enter__.return_value = mock_cursor
             # Mock fetchall to return results with count > 0
@@ -91,7 +91,7 @@ class TestGroupRepository:
 
     def test_exists_returns_false_when_group_not_found(self, group_repo):
         """Test that exists returns False when group is not found"""
-        with patch.object(group_repo, '_db_cursor') as mock_cursor_context:
+        with patch.object(group_repo, "_db_cursor") as mock_cursor_context:
             mock_cursor = Mock()
             mock_cursor_context.return_value.__enter__.return_value = mock_cursor
             # Mock fetchall to return results with count = 0
@@ -102,7 +102,7 @@ class TestGroupRepository:
 
     def test_exists_handles_empty_results(self, group_repo):
         """Test that exists handles empty results gracefully"""
-        with patch.object(group_repo, '_db_cursor') as mock_cursor_context:
+        with patch.object(group_repo, "_db_cursor") as mock_cursor_context:
             mock_cursor = Mock()
             mock_cursor_context.return_value.__enter__.return_value = mock_cursor
             # Mock fetchall to return empty results
@@ -129,7 +129,7 @@ class TestNasRepository:
 
     def test_exists_returns_true_when_nas_found(self, nas_repo):
         """Test that exists returns True when NAS is found"""
-        with patch.object(nas_repo, '_db_cursor') as mock_cursor_context:
+        with patch.object(nas_repo, "_db_cursor") as mock_cursor_context:
             mock_cursor = Mock()
             mock_cursor_context.return_value.__enter__.return_value = mock_cursor
             # Mock fetchone to return result with count > 0
@@ -140,7 +140,7 @@ class TestNasRepository:
 
     def test_exists_returns_false_when_nas_not_found(self, nas_repo):
         """Test that exists returns False when NAS is not found"""
-        with patch.object(nas_repo, '_db_cursor') as mock_cursor_context:
+        with patch.object(nas_repo, "_db_cursor") as mock_cursor_context:
             mock_cursor = Mock()
             mock_cursor_context.return_value.__enter__.return_value = mock_cursor
             # Mock fetchone to return result with count = 0
@@ -151,7 +151,7 @@ class TestNasRepository:
 
     def test_exists_handles_none_result(self, nas_repo):
         """Test that exists handles None result gracefully"""
-        with patch.object(nas_repo, '_db_cursor') as mock_cursor_context:
+        with patch.object(nas_repo, "_db_cursor") as mock_cursor_context:
             mock_cursor = Mock()
             mock_cursor_context.return_value.__enter__.return_value = mock_cursor
             # Mock fetchone to return None

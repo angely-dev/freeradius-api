@@ -7,7 +7,7 @@ services:
       dockerfile: docker/Dockerfile
     restart: unless-stopped
     depends_on:
-      - myraddb
+      - mariadb
     # I just wanna run two commands and have to use this ugly syntax, really Docker?
     # First, we insert some initial data then we run the Uvicorn web server.
     command: >
@@ -21,7 +21,7 @@ services:
       - DB_NAME=raddb
       - DB_USER=raduser
       - DB_PASS=radpass
-      - DB_HOST=myraddb
+      - DB_HOST=mariadb
       - DB_PORT=3306
       # API configuration
       - API_URL=http://localhost:8000
@@ -41,7 +41,7 @@ services:
       - DEBUG=false
       - LOG_LEVEL=INFO
   # MySQL database with FreeRADIUS schema
-  myraddb:
+  mariadb:
     image: mariadb:11.7.2-noble
     restart: unless-stopped
     ports:
@@ -65,9 +65,9 @@ services:
     image: phpmyadmin
     restart: unless-stopped
     depends_on:
-      - myraddb
+      - mariadb
     environment:
-      - PMA_HOST=myraddb
+      - PMA_HOST=mariadb
       - PMA_USER=${DB_USER:-raduser}
       - PMA_PASSWORD=${DB_PASS:-radpass}
     ports:

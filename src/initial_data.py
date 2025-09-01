@@ -112,7 +112,7 @@ if populate_dev_data:
         print("Development data populated successfully")
     except Exception as e:
         print(f"Failed to populate development data: {e}")
-        # We don't want to crash the entire application if we can't populate data
+        # We don"t want to crash the entire application if we can"t populate data
         # The API should still work without the initial data
 else:
     print("Skipping development data population in non-development environment")

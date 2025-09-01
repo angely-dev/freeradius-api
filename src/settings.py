@@ -114,7 +114,7 @@ class Settings(BaseSettings):
         @classmethod
         def customise_sources(cls, init_settings, env_settings, file_secret_settings):
             """Customize settings sources to support multiple environments."""
-            # Get the ENV value from environment or default to 'dev'
+            # Get the ENV value from environment or default to "dev"
             import os
 
             from pydantic_settings import PydanticBaseSettingsSource
