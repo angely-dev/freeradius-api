@@ -6,7 +6,7 @@ from database import db_connect
 
 # Check if we should populate development data
 # Only populate in development environment
-env = os.getenv("ENV", "dev")
+env = os.getenv("APP_ENV", "development")
 populate_dev_data = env.lower() in ["dev", "development"]
 
 if populate_dev_data:
